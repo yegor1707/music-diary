@@ -67,14 +67,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary">
-      <img src={`${import.meta.env.BASE_URL}images/ornament-1.png`} alt="" className="fixed top-0 left-0 w-32 opacity-20 pointer-events-none mix-blend-multiply" />
-      <img src={`${import.meta.env.BASE_URL}images/ornament-1.png`} alt="" className="fixed top-0 right-0 w-32 opacity-20 pointer-events-none mix-blend-multiply scale-x-[-1]" />
-
       <header className="sticky top-0 z-40 bg-card/90 backdrop-blur-md border-b border-border shadow-sm">
         <div className="max-w-5xl mx-auto px-6 pt-6 pb-0">
           <div className="flex items-start justify-between mb-5">
             <div className="flex-1" />
-            <Link href="/pieces" className="group cursor-pointer text-center flex-shrink-0">
+            <Link href="/" className="group cursor-pointer text-center flex-shrink-0">
               <h1 className="font-serif italic font-bold text-3xl text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
                 Leshukov Music Diary
               </h1>

@@ -26,7 +26,7 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={PiecesPage} />
+      <Route path="/" component={HomePage} />
 
       <Route path="/pieces" component={PiecesPage} />
       <Route path="/pieces/:id" component={PieceDetailPage} />

@@ -22,7 +22,7 @@ router.get("/inspiration", async (req, res) => {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
-      max_completion_tokens: 300,
+      max_completion_tokens: 1500,
       messages: [
         {
           role: "system",

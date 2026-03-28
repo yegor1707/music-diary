@@ -56,8 +56,15 @@ artifacts-monorepo/
 
 - `POST /api/auth/verify` — verify password (1707)
 - CRUD: `/api/pieces`, `/api/composers`, `/api/notes`, `/api/books`
-- `POST /api/upload` — image upload (multipart), returns `{ url }`
-- `GET /api/uploads/:filename` — serve uploaded images
+- `POST /api/upload` — image upload (multipart), returns `{ url }` — uploads to Replit Object Storage (persistent)
+- `GET /api/uploads/:filename` — serve uploaded images (local fallback only)
+- `GET /api/inspiration` — AI-generated music quote/fact/recommendation (gpt-5-mini, max 1500 tokens)
+
+## Home Page
+
+- Route `/` shows HomePage with random AI-generated music inspiration (quote, fact, or recommendation)
+- Clicking "Leshukov Music Diary" title navigates to `/` (home/inspiration page)
+- Inspiration refreshes on demand with "Another inspiration" button
 
 ## Design
 
