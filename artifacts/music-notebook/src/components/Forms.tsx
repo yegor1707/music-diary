@@ -84,14 +84,14 @@ function ImageUpload({ value, onChange }: { value: string, onChange: (url: strin
 
 // --- Specific Forms ---
 
-export function NoteForm({ initialData, onSuccess }: { initialData?: Note, onSuccess: () => void }) {
+export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: { initialData?: Note, onSuccess: () => void, defaultSection?: string }) {
   const queryClient = useQueryClient();
   const create = useCreateNote();
   const update = useUpdateNote();
   
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
-    section: initialData?.section || "journal",
+    section: initialData?.section || defaultSection,
     chapterTitle: initialData?.chapterTitle || "",
     content: initialData?.content || "",
     imageUrl: initialData?.imageUrl || "",

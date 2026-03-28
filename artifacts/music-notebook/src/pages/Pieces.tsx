@@ -26,7 +26,7 @@ export default function PiecesPage() {
   return (
     <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="font-serif italic text-3xl text-foreground">Музыка & Разборы</h2>
+        <h2 className="font-serif italic text-3xl text-foreground">Music & Analysis</h2>
         {isEditing && (
           <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
             <Plus className="w-4 h-4" /> Add Piece

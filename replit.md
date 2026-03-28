@@ -36,8 +36,10 @@ artifacts-monorepo/
 
 ## App Features
 
-- **Sections**: Конспекты (chapter notes as cards → longreads), Музыка (musical pieces by composer), Композиторы (biographies + linked pieces), Книги (methodical books with cover + synopsis + notes)
-- **Edit mode**: Password `1707` unlocks editing (stored in sessionStorage)
+- **Title**: "Leshukov Music Diary" — subtitle "A Thesaurus of Musical Knowledge"
+- **Sections (in order)**: Chronicle (daily diary, auto-creates today's entry on editor login), Music (pieces by composer), Composers (biographies + linked pieces), Methodical Books (covers + synopsis), Masterclasses (entries stored via notes section="masterclasses"), Notes (general notes, section="notes")
+- **Edit mode**: 4-digit PIN `1707` in top-right header button (stored in sessionStorage)
+- **Section filtering**: notes table `section` field — "chronicle" | "masterclasses" | "notes" | "journal" etc.
 - **Composer photos**: Display portrait photo if available, elegant initial fallback
 - **Links**: Composer detail → linked pieces → piece detail page
 - **Rich content**: Text notes, image upload (`POST /api/upload`), YouTube embeds
