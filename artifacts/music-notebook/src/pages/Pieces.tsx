@@ -4,7 +4,7 @@ import { useListPieces } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Modal } from "@/components/ui/modal";
 import { PieceForm } from "@/components/Forms";
-import { Plus, PlayCircle } from "lucide-react";
+import { Plus, PlayCircle, ArrowRight } from "lucide-react";
 
 export default function PiecesPage() {
   const { data: pieces, isLoading } = useListPieces();
@@ -13,7 +13,6 @@ export default function PiecesPage() {
 
   if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Sorting sheet music...</div>;
 
-  // Group by composer name (fallback for missing relation)
   const grouped = pieces?.reduce((acc, piece) => {
     const comp = piece.composer || "Unknown";
     if (!acc[comp]) acc[comp] = [];
@@ -43,29 +42,31 @@ export default function PiecesPage() {
               <h3 className="font-serif font-bold text-2xl text-foreground border-b-2 border-border pb-2 mb-6 inline-block pr-8">{composer}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {grouped![composer].map(piece => (
-                  <Link key={piece.id} href={`/pieces/${piece.id}`} className="group block h-full">
-                    <div className="h-full p-5 bg-card notebook-border hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-serif font-bold text-xl text-foreground leading-tight group-hover:text-primary transition-colors">{piece.title}</h4>
-                          {piece.youtubeUrl && <PlayCircle className="w-5 h-5 text-primary/40 flex-shrink-0" />}
-                        </div>
-                        {piece.tags && piece.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {piece.tags.map(t => (
-                              <span key={t} className="px-2 py-1 bg-background border border-border/50 text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground rounded-sm">
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-6 flex items-center justify-between border-t border-border/30 pt-3">
-                        <span className="font-sans text-[0.65rem] tracking-widest text-muted-foreground uppercase">{piece.year || "—"}</span>
-                        <span className="font-sans text-xs tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity">Analyze →</span>
-                      </div>
+                  <div key={piece.id} className="flex flex-col h-full p-5 bg-card notebook-border hover:border-primary/30 hover:shadow-md transition-all">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-serif font-bold text-xl text-foreground leading-tight">{piece.title}</h4>
+                      {piece.youtubeUrl && <PlayCircle className="w-5 h-5 text-primary/40 flex-shrink-0 ml-2" />}
                     </div>
-                  </Link>
+
+                    {piece.tags && piece.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
+                        {piece.tags.map(t => (
+                          <span key={t} className="px-2.5 py-0.5 bg-primary/8 border border-primary/20 text-[0.6rem] font-sans uppercase tracking-widest text-primary/80 rounded-sm">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-auto flex items-center justify-between border-t border-border/30 pt-3">
+                      <span className="font-sans text-[0.65rem] tracking-widest text-muted-foreground uppercase">{piece.year || "—"}</span>
+                      <Link href={`/pieces/${piece.id}`}>
+                        <span className="flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-widest text-primary hover:opacity-70 transition-opacity">
+                          Analyze <ArrowRight className="w-3.5 h-3.5" />
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>

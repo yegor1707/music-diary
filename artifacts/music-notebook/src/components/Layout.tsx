@@ -1,12 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { Lock, Unlock, ScrollText, Music, Users, BookOpen, GraduationCap, FileText } from "lucide-react";
+import { Lock, Unlock, Music, Users, BookOpen, GraduationCap, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useRef } from "react";
 import { Modal } from "./ui/modal";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Chronicle", icon: ScrollText },
   { href: "/pieces", label: "Music", icon: Music },
   { href: "/composers", label: "Composers", icon: Users },
   { href: "/books", label: "Methodical Books", icon: BookOpen },
@@ -22,32 +21,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handlePinChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newPin = [...pin];
-    newPin[index] = value.slice(-1);
-    setPin(newPin);
-    setError("");
-    if (value && index < 3) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handlePinKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !pin[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-    if (e.key === "Enter") {
-      handleLogin();
-    }
-  };
-
-  const handleLogin = async () => {
-    const code = pin.join("");
-    if (code.length < 4) {
-      setError("Enter all 4 digits.");
-      return;
-    }
+  const submitPin = async (digits: string[]) => {
+    const code = digits.join("");
     setError("");
     const success = await login(code);
     if (success) {
@@ -57,6 +32,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
       setError("Incorrect PIN.");
       setPin(["", "", "", ""]);
       setTimeout(() => inputRefs.current[0]?.focus(), 50);
+    }
+  };
+
+  const handlePinChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newPin = [...pin];
+    newPin[index] = value.slice(-1);
+    setPin(newPin);
+    setError("");
+    if (value && index < 3) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    if (value && index === 3) {
+      const filled = [...newPin];
+      filled[3] = value.slice(-1);
+      if (filled.every(d => d !== "")) {
+        submitPin(filled);
+      }
+    }
+  };
+
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !pin[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -75,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-5xl mx-auto px-6 pt-6 pb-0">
           <div className="flex items-start justify-between mb-5">
             <div className="flex-1" />
-            <Link href="/" className="group cursor-pointer text-center flex-shrink-0">
+            <Link href="/pieces" className="group cursor-pointer text-center flex-shrink-0">
               <h1 className="font-serif italic font-bold text-3xl text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
                 Leshukov Music Diary
               </h1>
@@ -128,7 +127,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} title="Unlock Editor">
         <div className="space-y-6">
-          <p className="text-muted-foreground font-serif text-base italic text-center">Enter your 4-digit PIN to access editing.</p>
+          <p className="text-muted-foreground font-serif text-base italic text-center">Enter your 4-digit PIN.</p>
           <div className="flex justify-center gap-3">
             {pin.map((digit, i) => (
               <input
@@ -146,12 +145,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ))}
           </div>
           {error && <p className="text-red-700 text-sm text-center">{error}</p>}
-          <button
-            onClick={handleLogin}
-            className="w-full bg-primary text-primary-foreground font-sans font-semibold uppercase tracking-[0.15em] text-xs px-6 py-3 rounded-sm hover:bg-primary/90 transition-all"
-          >
-            Unlock
-          </button>
         </div>
       </Modal>
     </div>

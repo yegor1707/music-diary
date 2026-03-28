@@ -1,0 +1,268 @@
+import { useState, useRef } from "react";
+import { useUploadImage } from "@workspace/api-client-react";
+import { 
+  Plus, Trash2, Image as ImageIcon, FileText, Quote, Type, 
+  Heading2, Music2, ChevronUp, ChevronDown, Loader2
+} from "lucide-react";
+
+export type Block =
+  | { id: string; type: "text"; content: string }
+  | { id: string; type: "heading"; content: string }
+  | { id: string; type: "subheading"; content: string }
+  | { id: string; type: "image"; url: string; caption: string }
+  | { id: string; type: "score"; url: string; caption: string }
+  | { id: string; type: "pdf"; url: string; title: string }
+  | { id: string; type: "quote"; content: string };
+
+function genId() {
+  return Math.random().toString(36).slice(2);
+}
+
+export function parseBlocks(raw: string | null | undefined): Block[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    if (raw.trim()) {
+      return [{ id: genId(), type: "text", content: raw }];
+    }
+  }
+  return [];
+}
+
+export function serializeBlocks(blocks: Block[]): string {
+  return JSON.stringify(blocks);
+}
+
+const BLOCK_LABELS: Record<Block["type"], string> = {
+  text: "Paragraph",
+  heading: "Heading",
+  subheading: "Sub-heading",
+  image: "Image",
+  score: "Score Fragment",
+  pdf: "PDF Document",
+  quote: "Musical Quote",
+};
+
+const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
+  text: <Type className="w-3.5 h-3.5" />,
+  heading: <Heading2 className="w-3.5 h-3.5" />,
+  subheading: <Heading2 className="w-3 h-3" />,
+  image: <ImageIcon className="w-3.5 h-3.5" />,
+  score: <Music2 className="w-3.5 h-3.5" />,
+  pdf: <FileText className="w-3.5 h-3.5" />,
+  quote: <Quote className="w-3.5 h-3.5" />,
+};
+
+const ADD_BLOCK_TYPES: Block["type"][] = ["text", "heading", "subheading", "image", "score", "pdf", "quote"];
+
+function FileUploadButton({ onUpload, accept = "image/*" }: { onUpload: (url: string) => void; accept?: string }) {
+  const upload = useUploadImage();
+  const ref = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await upload.mutateAsync({ data: { file } });
+      onUpload(res.url);
+    } catch { /* noop */ }
+    if (ref.current) ref.current.value = "";
+  };
+
+  return (
+    <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs font-sans text-primary hover:opacity-80 transition-opacity">
+      {upload.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+      <span>{upload.isPending ? "Uploading..." : "Upload file"}</span>
+      <input ref={ref} type="file" accept={accept} className="hidden" onChange={handleFile} disabled={upload.isPending} />
+    </label>
+  );
+}
+
+function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast }: {
+  block: Block;
+  onChange: (b: Block) => void;
+  onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
+  const baseInput = "w-full bg-transparent border-b border-border/50 pb-1.5 text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40";
+
+  return (
+    <div className="group relative bg-card notebook-border p-4 transition-shadow hover:shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5 text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">
+          {BLOCK_ICONS[block.type]}
+          {BLOCK_LABELS[block.type]}
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button type="button" onClick={onMoveUp} disabled={isFirst} className="p-1 hover:text-primary text-muted-foreground disabled:opacity-20 transition-colors"><ChevronUp className="w-3.5 h-3.5" /></button>
+          <button type="button" onClick={onMoveDown} disabled={isLast} className="p-1 hover:text-primary text-muted-foreground disabled:opacity-20 transition-colors"><ChevronDown className="w-3.5 h-3.5" /></button>
+          <button type="button" onClick={onDelete} className="p-1 hover:text-red-700 text-muted-foreground transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+        </div>
+      </div>
+
+      {block.type === "text" && (
+        <textarea
+          value={block.content}
+          onChange={e => onChange({ ...block, content: e.target.value })}
+          placeholder="Write a paragraph..."
+          className="w-full bg-transparent border border-border/40 p-3 rounded-sm text-foreground font-serif text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors min-h-[100px] resize-y"
+        />
+      )}
+
+      {(block.type === "heading" || block.type === "subheading") && (
+        <input
+          type="text"
+          value={block.content}
+          onChange={e => onChange({ ...block, content: e.target.value })}
+          placeholder={block.type === "heading" ? "Section heading..." : "Sub-section heading..."}
+          className={`${baseInput} ${block.type === "heading" ? "text-2xl font-bold" : "text-xl"}`}
+        />
+      )}
+
+      {block.type === "quote" && (
+        <textarea
+          value={block.content}
+          onChange={e => onChange({ ...block, content: e.target.value })}
+          placeholder="Musical excerpt or quote..."
+          className="w-full bg-transparent border-l-2 border-primary/40 pl-4 text-foreground font-serif text-base italic leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[80px] resize-y"
+        />
+      )}
+
+      {(block.type === "image" || block.type === "score") && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <FileUploadButton onUpload={url => onChange({ ...block, url })} accept="image/*" />
+            <span className="text-muted-foreground/40 text-xs">or</span>
+            <input
+              type="text"
+              value={block.url}
+              onChange={e => onChange({ ...block, url: e.target.value })}
+              placeholder="Paste image URL..."
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+            />
+          </div>
+          {block.url && (
+            <img src={block.url} alt="" className="max-h-64 w-auto rounded-sm border border-border/30 object-contain" />
+          )}
+          <input
+            type="text"
+            value={block.caption}
+            onChange={e => onChange({ ...block, caption: e.target.value })}
+            placeholder="Caption (optional)..."
+            className={`${baseInput} text-sm text-muted-foreground`}
+          />
+        </div>
+      )}
+
+      {block.type === "pdf" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <FileUploadButton onUpload={url => onChange({ ...block, url })} accept=".pdf,application/pdf" />
+            <span className="text-muted-foreground/40 text-xs">or</span>
+            <input
+              type="text"
+              value={block.url}
+              onChange={e => onChange({ ...block, url: e.target.value })}
+              placeholder="Paste PDF URL..."
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+            />
+          </div>
+          <input
+            type="text"
+            value={block.title}
+            onChange={e => onChange({ ...block, title: e.target.value })}
+            placeholder="Document title..."
+            className={`${baseInput} text-sm`}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function createBlock(type: Block["type"]): Block {
+  const id = genId();
+  switch (type) {
+    case "text": return { id, type: "text", content: "" };
+    case "heading": return { id, type: "heading", content: "" };
+    case "subheading": return { id, type: "subheading", content: "" };
+    case "image": return { id, type: "image", url: "", caption: "" };
+    case "score": return { id, type: "score", url: "", caption: "" };
+    case "pdf": return { id, type: "pdf", url: "", title: "" };
+    case "quote": return { id, type: "quote", content: "" };
+  }
+}
+
+export function ArticleEditor({ blocks, onChange }: { blocks: Block[]; onChange: (b: Block[]) => void }) {
+  const [showMenu, setShowMenu] = useState(false);
+
+  const updateBlock = (idx: number, b: Block) => {
+    const next = [...blocks];
+    next[idx] = b;
+    onChange(next);
+  };
+
+  const deleteBlock = (idx: number) => {
+    onChange(blocks.filter((_, i) => i !== idx));
+  };
+
+  const moveBlock = (idx: number, dir: -1 | 1) => {
+    const next = [...blocks];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  };
+
+  const addBlock = (type: Block["type"]) => {
+    onChange([...blocks, createBlock(type)]);
+    setShowMenu(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      {blocks.map((block, idx) => (
+        <BlockEditor
+          key={block.id}
+          block={block}
+          onChange={b => updateBlock(idx, b)}
+          onDelete={() => deleteBlock(idx)}
+          onMoveUp={() => moveBlock(idx, -1)}
+          onMoveDown={() => moveBlock(idx, 1)}
+          isFirst={idx === 0}
+          isLast={idx === blocks.length - 1}
+        />
+      ))}
+
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowMenu(!showMenu)}
+          className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-border/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors text-xs font-sans uppercase tracking-widest rounded-sm"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add Block
+        </button>
+        {showMenu && (
+          <div className="absolute bottom-full mb-1 left-0 right-0 bg-card notebook-border rounded-sm shadow-xl z-20 p-2 grid grid-cols-2 gap-1">
+            {ADD_BLOCK_TYPES.map(type => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => addBlock(type)}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-sans text-foreground hover:bg-primary/5 hover:text-primary transition-colors rounded-sm text-left"
+              >
+                {BLOCK_ICONS[type]}
+                {BLOCK_LABELS[type]}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

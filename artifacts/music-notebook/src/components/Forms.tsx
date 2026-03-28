@@ -189,8 +189,7 @@ export function PieceForm({ initialData, onSuccess }: { initialData?: Piece, onS
       </div>
       <FormGroup label="Year"><Input value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} placeholder="e.g. 1835" /></FormGroup>
       <FormGroup label="YouTube URL"><Input value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} placeholder="Paste full YouTube link" /></FormGroup>
-      <FormGroup label="Tags (comma separated)"><Input value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="romantic, ballade, coda" /></FormGroup>
-      <FormGroup label="Analysis / Notes"><Textarea value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} placeholder="Your analysis..." /></FormGroup>
+      <FormGroup label="Style (comma separated)"><Input value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="e.g. Romantic, Étude, Nocturne" /></FormGroup>
       <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Piece</Button></div>
     </form>
   );
