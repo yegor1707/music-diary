@@ -478,6 +478,9 @@ components:
         imageUrl:
           type: string
           nullable: true
+        sheetMusicUrl:
+          type: string
+          nullable: true
         content:
           type: string
           nullable: true
@@ -511,6 +514,9 @@ components:
           type: string
           nullable: true
         imageUrl:
+          type: string
+          nullable: true
+        sheetMusicUrl:
           type: string
           nullable: true
         content:

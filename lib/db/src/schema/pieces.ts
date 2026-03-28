@@ -13,6 +13,7 @@ export const piecesTable = pgTable("pieces", {
   imageUrl: text("image_url"),
   content: text("content"),
   tags: text("tags").array().notNull().default([]),
+  sheetMusicUrl: text("sheet_music_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

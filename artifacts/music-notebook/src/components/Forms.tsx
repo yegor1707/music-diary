@@ -137,6 +137,7 @@ export function PieceForm({ initialData, onSuccess }: { initialData?: Piece, onS
     composerId: initialData?.composerId ?? null as number | null,
     year: initialData?.year || "",
     youtubeUrl: initialData?.youtubeUrl || "",
+    sheetMusicUrl: initialData?.sheetMusicUrl || "",
     content: initialData?.content || "",
     tags: initialData?.tags.join(", ") || ""
   });
@@ -172,7 +173,7 @@ export function PieceForm({ initialData, onSuccess }: { initialData?: Piece, onS
   const isPending = create.isPending || update.isPending;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <FormGroup label="Title"><Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Ballade No. 1 in G minor" /></FormGroup>
       <div className="grid grid-cols-2 gap-4">
         <FormGroup label="Linked Composer">
@@ -188,9 +189,17 @@ export function PieceForm({ initialData, onSuccess }: { initialData?: Piece, onS
         <FormGroup label="Composer (manual)"><Input value={formData.composer} onChange={e => setFormData({...formData, composer: e.target.value})} placeholder="e.g. Chopin" /></FormGroup>
       </div>
       <FormGroup label="Year"><Input value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} placeholder="e.g. 1835" /></FormGroup>
-      <FormGroup label="YouTube URL"><Input value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} placeholder="Paste full YouTube link" /></FormGroup>
+      <div className="p-4 bg-background/50 border border-border/40 rounded-sm space-y-4">
+        <p className="text-[0.6rem] font-sans uppercase tracking-[0.2em] text-muted-foreground font-semibold">Media & Sheet Music</p>
+        <FormGroup label="YouTube Recording URL">
+          <Input value={formData.youtubeUrl} onChange={e => setFormData({...formData, youtubeUrl: e.target.value})} placeholder="https://www.youtube.com/watch?v=..." />
+        </FormGroup>
+        <FormGroup label="Sheet Music PDF (URL or upload path)">
+          <Input value={formData.sheetMusicUrl} onChange={e => setFormData({...formData, sheetMusicUrl: e.target.value})} placeholder="https://... or /api/uploads/..." />
+        </FormGroup>
+      </div>
       <FormGroup label="Style (comma separated)"><Input value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="e.g. Romantic, Étude, Nocturne" /></FormGroup>
-      <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Piece</Button></div>
+      <div className="flex justify-end pt-2"><Button type="submit" isLoading={isPending}>Save Piece</Button></div>
     </form>
   );
 }

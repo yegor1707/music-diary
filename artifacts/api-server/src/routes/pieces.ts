@@ -19,6 +19,7 @@ router.post("/pieces", async (req, res) => {
     genre: body.genre != null ? String(body.genre) : null,
     youtubeUrl: body.youtubeUrl != null ? String(body.youtubeUrl) : null,
     imageUrl: body.imageUrl != null ? String(body.imageUrl) : null,
+    sheetMusicUrl: body.sheetMusicUrl != null ? String(body.sheetMusicUrl) : null,
     content: body.content != null ? String(body.content) : null,
     tags: Array.isArray(body.tags) ? (body.tags as string[]) : [],
   }).returning();
@@ -41,6 +42,7 @@ router.put("/pieces/:id", async (req, res) => {
     genre: body.genre != null ? String(body.genre) : null,
     youtubeUrl: body.youtubeUrl != null ? String(body.youtubeUrl) : null,
     imageUrl: body.imageUrl != null ? String(body.imageUrl) : null,
+    sheetMusicUrl: body.sheetMusicUrl != null ? String(body.sheetMusicUrl) : null,
     content: body.content != null ? String(body.content) : null,
     tags: Array.isArray(body.tags) ? (body.tags as string[]) : [],
     updatedAt: new Date(),
@@ -64,6 +66,7 @@ function formatPiece(p: typeof piecesTable.$inferSelect) {
     genre: p.genre ?? null,
     youtubeUrl: p.youtubeUrl ?? null,
     imageUrl: p.imageUrl ?? null,
+    sheetMusicUrl: p.sheetMusicUrl ?? null,
     content: p.content ?? null,
     tags: p.tags ?? [],
     createdAt: p.createdAt.toISOString(),
