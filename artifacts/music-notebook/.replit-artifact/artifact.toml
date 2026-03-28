@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Music Notebook"
+version = "1.0.0"
+id = "artifacts/music-notebook"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24212
+
+[services.development]
+run = "pnpm --filter @workspace/music-notebook run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/music-notebook", "run", "build" ]
+publicDir = "artifacts/music-notebook/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24212"
+BASE_PATH = "/"

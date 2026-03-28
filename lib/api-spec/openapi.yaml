@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Music Notebook API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: pieces
+    description: Musical pieces
+  - name: composers
+    description: Composers
+  - name: notes
+    description: Notes/longform essays
+  - name: books
+    description: Methodical books
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,398 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/verify:
+    post:
+      operationId: verifyPassword
+      tags: [auth]
+      summary: Verify edit password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordInput"
+      responses:
+        "200":
+          description: Auth result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+
+  /pieces:
+    get:
+      operationId: listPieces
+      tags: [pieces]
+      summary: List all musical pieces
+      responses:
+        "200":
+          description: List of pieces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Piece"
+    post:
+      operationId: createPiece
+      tags: [pieces]
+      summary: Create a musical piece
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PieceInput"
+      responses:
+        "201":
+          description: Created piece
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+
+  /pieces/{id}:
+    get:
+      operationId: getPiece
+      tags: [pieces]
+      summary: Get a piece by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Piece
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+    put:
+      operationId: updatePiece
+      tags: [pieces]
+      summary: Update a piece
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PieceInput"
+      responses:
+        "200":
+          description: Updated piece
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+    delete:
+      operationId: deletePiece
+      tags: [pieces]
+      summary: Delete a piece
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /composers:
+    get:
+      operationId: listComposers
+      tags: [composers]
+      summary: List all composers
+      responses:
+        "200":
+          description: List of composers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Composer"
+    post:
+      operationId: createComposer
+      tags: [composers]
+      summary: Create a composer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComposerInput"
+      responses:
+        "201":
+          description: Created composer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Composer"
+
+  /composers/{id}:
+    get:
+      operationId: getComposer
+      tags: [composers]
+      summary: Get a composer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Composer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Composer"
+    put:
+      operationId: updateComposer
+      tags: [composers]
+      summary: Update a composer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComposerInput"
+      responses:
+        "200":
+          description: Updated composer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Composer"
+    delete:
+      operationId: deleteComposer
+      tags: [composers]
+      summary: Delete a composer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /notes:
+    get:
+      operationId: listNotes
+      tags: [notes]
+      summary: List all notes
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      operationId: createNote
+      tags: [notes]
+      summary: Create a note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteInput"
+      responses:
+        "201":
+          description: Created note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+
+  /notes/{id}:
+    get:
+      operationId: getNote
+      tags: [notes]
+      summary: Get a note by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+    put:
+      operationId: updateNote
+      tags: [notes]
+      summary: Update a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteInput"
+      responses:
+        "200":
+          description: Updated note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+    delete:
+      operationId: deleteNote
+      tags: [notes]
+      summary: Delete a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /books:
+    get:
+      operationId: listBooks
+      tags: [books]
+      summary: List all methodical books
+      responses:
+        "200":
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+    post:
+      operationId: createBook
+      tags: [books]
+      summary: Create a book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookInput"
+      responses:
+        "201":
+          description: Created book
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
+  /books/{id}:
+    get:
+      operationId: getBook
+      tags: [books]
+      summary: Get a book by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Book
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+    put:
+      operationId: updateBook
+      tags: [books]
+      summary: Update a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookInput"
+      responses:
+        "200":
+          description: Updated book
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+    delete:
+      operationId: deleteBook
+      tags: [books]
+      summary: Delete a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /upload:
+    post:
+      operationId: uploadImage
+      tags: [health]
+      summary: Upload an image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required: [file]
+      responses:
+        "200":
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +431,239 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    PasswordInput:
+      type: object
+      properties:
+        password:
+          type: string
+      required: [password]
+
+    AuthResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    UploadResult:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]
+
+    Piece:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        composer:
+          type: string
+        composerId:
+          type: integer
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        genre:
+          type: string
+          nullable: true
+        youtubeUrl:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, title, composer, tags, createdAt, updatedAt]
+
+    PieceInput:
+      type: object
+      properties:
+        title:
+          type: string
+        composer:
+          type: string
+        composerId:
+          type: integer
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        genre:
+          type: string
+          nullable: true
+        youtubeUrl:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+      required: [title, composer]
+
+    Composer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        born:
+          type: string
+          nullable: true
+        died:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        biography:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, name, createdAt, updatedAt]
+
+    ComposerInput:
+      type: object
+      properties:
+        name:
+          type: string
+        born:
+          type: string
+          nullable: true
+        died:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        biography:
+          type: string
+          nullable: true
+      required: [name]
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        section:
+          type: string
+        chapterTitle:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, title, section, sortOrder, createdAt, updatedAt]
+
+    NoteInput:
+      type: object
+      properties:
+        title:
+          type: string
+        section:
+          type: string
+        chapterTitle:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+      required: [title, section, sortOrder]
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+          nullable: true
+        coverUrl:
+          type: string
+          nullable: true
+        synopsis:
+          type: string
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, title, createdAt, updatedAt]
+
+    BookInput:
+      type: object
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+          nullable: true
+        coverUrl:
+          type: string
+          nullable: true
+        synopsis:
+          type: string
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+      required: [title]

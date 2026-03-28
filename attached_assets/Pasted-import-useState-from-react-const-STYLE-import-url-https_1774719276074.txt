@@ -1,0 +1,706 @@
+import { useState } from "react";
+
+const STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Jost:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:    #f0e9df;
+    --bg2:   #e8e0d5;
+    --bg3:   #dfd6c8;
+    --paper: #faf6f0;
+    --ink:   #1a1510;
+    --ink2:  #3a3025;
+    --ink3:  #6b6050;
+    --ink4:  #a89880;
+    --line:  #d5ccc0;
+    --line2: #c2b8a8;
+    --rust:  #7c3a1a;
+    --rust2: rgba(124,58,26,0.10);
+    --rust3: rgba(124,58,26,0.05);
+    --del:   #8b2222;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .app {
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'Jost', sans-serif;
+    color: var(--ink);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* STICKY SHELL */
+  .shell {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-header { padding: 18px 20px 0; }
+  .header-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
+  .site-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 700; font-size: 1.55rem;
+    letter-spacing: -0.01em; line-height: 1;
+    color: var(--ink);
+  }
+  .site-title em { font-style: italic; color: var(--rust); }
+  .site-tag {
+    font-size: 0.52rem; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink4); border: 1px solid var(--line2);
+    padding: 3px 8px; background: var(--bg2); margin-bottom: 3px;
+  }
+  .nav { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0; padding: 10px 14px 9px;
+    background: none; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--ink3);
+    font-family: 'Jost', sans-serif; font-size: 0.67rem; font-weight: 500;
+    letter-spacing: 0.07em; cursor: pointer;
+    transition: color .15s, border-color .15s; white-space: nowrap;
+  }
+  .nav-btn.active { color: var(--ink); border-bottom-color: var(--rust); }
+
+  .section { padding-bottom: 80px; }
+
+  /* ── CHRONICLE ── */
+  .day-label {
+    padding: 11px 20px 8px;
+    font-size: 0.56rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink4); background: var(--bg2);
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .day-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  .c-entry {
+    display: flex; border-bottom: 1px solid var(--line);
+    background: var(--paper); cursor: pointer;
+    transition: background .13s; animation: rise .26s ease both;
+  }
+  .c-entry:hover { background: var(--bg); }
+  .c-bar { width: 3px; flex-shrink: 0; }
+  .c-bar.music   { background: #4a7a5a; }
+  .c-bar.mc      { background: #7a5a2a; }
+  .c-bar.note    { background: var(--rust); }
+  .c-bar.comp    { background: #3a5a7a; }
+  .c-bar.method  { background: #5a4a7a; }
+
+  .c-body { flex: 1; padding: 12px 14px 12px 13px; min-width: 0; }
+  .c-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .c-kind { font-size: 0.54rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink4); }
+  .c-dot  { width: 3px; height: 3px; border-radius: 50%; background: var(--line2); }
+  .c-time { font-size: 0.54rem; color: var(--ink4); }
+  .c-title {
+    font-family: 'Cormorant', serif; font-weight: 700; font-size: 1.02rem;
+    color: var(--ink); line-height: 1.2; margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .c-sub { font-size: 0.67rem; color: var(--ink3); margin-bottom: 4px; }
+  .c-excerpt {
+    font-family: 'Cormorant', serif; font-style: italic; font-size: 0.9rem;
+    color: var(--ink3); line-height: 1.48;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .c-chev { display: flex; align-items: center; padding-right: 14px; color: var(--ink4); font-size: 0.72rem; }
+
+  /* ── FILTER PILLS ── */
+  .filter-bar {
+    padding: 10px 20px; display: flex; gap: 7px; overflow-x: auto;
+    scrollbar-width: none; background: var(--paper); border-bottom: 1px solid var(--line);
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .pill {
+    flex-shrink: 0; padding: 5px 13px;
+    background: none; border: 1px solid var(--line2);
+    color: var(--ink3); font-family: 'Jost', sans-serif;
+    font-size: 0.63rem; font-weight: 500; letter-spacing: 0.07em;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .pill.active { background: var(--rust); border-color: var(--rust); color: #faf6f0; }
+  .pill:not(.active):hover { border-color: var(--rust); color: var(--rust); }
+
+  /* ── ALPHA SEP ── */
+  .alpha-sep {
+    padding: 7px 20px 5px;
+    font-family: 'Cormorant', serif; font-weight: 700; font-style: italic;
+    font-size: 1.1rem; color: var(--rust);
+    background: var(--bg2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+
+  /* ── ROW ── */
+  .row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 20px; background: var(--paper);
+    border-bottom: 1px solid var(--line); cursor: pointer;
+    transition: background .13s; animation: rise .24s ease both;
+  }
+  .row:hover { background: var(--bg); }
+  .row-av {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: var(--rust2); border: 1px solid rgba(124,58,26,0.16);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant', serif; font-style: italic; font-weight: 700;
+    font-size: 1rem; color: var(--rust);
+  }
+  .row-av.blue   { background: rgba(58,90,122,0.1); border-color: rgba(58,90,122,0.18); color: #3a5a7a; }
+  .row-av.green  { background: rgba(74,122,90,0.1); border-color: rgba(74,122,90,0.18); color: #4a7a5a; }
+  .row-av.purple { background: rgba(90,74,122,0.1); border-color: rgba(90,74,122,0.18); color: #5a4a7a; }
+  .row-av.sym { font-style: normal; font-size: 0.85rem; }
+
+  .row-main { flex: 1; min-width: 0; }
+  .row-title {
+    font-family: 'Cormorant', serif; font-weight: 600; font-size: 0.97rem;
+    color: var(--ink); line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .row-sub { font-size: 0.66rem; color: var(--ink3); margin-top: 2px; }
+  .row-count { font-size: 0.6rem; color: var(--ink4); font-weight: 500; flex-shrink: 0; }
+  .row-chev { color: var(--ink4); font-size: 0.72rem; flex-shrink: 0; margin-left: 4px; }
+
+  /* SUB-NAV */
+  .sub-nav { display: flex; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .sub-btn {
+    flex: 1; padding: 10px 6px; background: none; border: none;
+    border-bottom: 2px solid transparent; color: var(--ink3);
+    font-family: 'Jost', sans-serif; font-size: 0.63rem; font-weight: 500;
+    letter-spacing: 0.06em; cursor: pointer; text-align: center;
+    transition: color .15s, border-color .15s; white-space: nowrap;
+  }
+  .sub-btn.active { color: var(--ink); border-bottom-color: var(--rust); }
+
+  .sec-head {
+    padding: 14px 20px 10px; background: var(--bg2);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .sec-head-title {
+    font-family: 'Cormorant', serif; font-weight: 700; font-style: italic;
+    font-size: 1.25rem; color: var(--ink);
+  }
+  .sec-head-count { font-size: 0.6rem; color: var(--ink4); }
+
+  /* ADD */
+  .add-row {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 20px; background: none; border: none;
+    border-bottom: 1px solid var(--line); width: 100%;
+    cursor: pointer; color: var(--ink3);
+    font-family: 'Jost', sans-serif; font-size: 0.67rem; font-weight: 500;
+    letter-spacing: 0.07em; text-align: left;
+    transition: color .15s, background .15s;
+  }
+  .add-row:hover { background: var(--bg2); color: var(--rust); }
+  .add-icon {
+    width: 26px; height: 26px; border: 1px dashed var(--line2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; color: var(--ink4); flex-shrink: 0;
+    transition: border-color .15s, color .15s;
+  }
+  .add-row:hover .add-icon { border-color: var(--rust); color: var(--rust); }
+
+  /* NOTE ITEMS */
+  .note-item {
+    padding: 14px 20px; background: var(--paper); border-bottom: 1px solid var(--line);
+    cursor: pointer; transition: background .13s; animation: rise .24s ease both;
+  }
+  .note-item:hover { background: var(--bg); }
+  .note-date { font-size: 0.57rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--rust); margin-bottom: 4px; }
+  .note-title { font-family: 'Cormorant', serif; font-weight: 700; font-size: 1rem; color: var(--ink); margin-bottom: 4px; }
+  .note-text { font-family: 'Cormorant', serif; font-style: italic; font-size: 0.9rem; color: var(--ink3); line-height: 1.55;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* INPUT */
+  .input-block { padding: 14px 20px; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .input-label { font-size: 0.57rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink4); margin-bottom: 8px; }
+  .input-block input, .input-block textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--line);
+    padding: 9px 12px; font-family: 'Cormorant', serif; font-style: italic;
+    font-size: 0.97rem; color: var(--ink); resize: none; outline: none;
+    line-height: 1.5; margin-bottom: 7px; display: block; transition: border-color .15s;
+  }
+  .input-block input { font-family: 'Jost'; font-style: normal; font-size: 0.8rem; }
+  .input-block textarea { min-height: 80px; }
+  .input-block textarea:focus, .input-block input:focus { border-color: var(--rust); }
+  .input-block textarea::placeholder, .input-block input::placeholder { color: var(--ink4); font-style: italic; }
+  .input-row { display: flex; justify-content: flex-end; gap: 7px; }
+  .btn {
+    background: var(--rust); border: none; color: #faf6f0;
+    font-family: 'Jost', sans-serif; font-size: 0.62rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .btn:hover { opacity: 0.82; }
+  .btn-ghost {
+    background: none; border: 1px solid var(--line2); color: var(--ink3);
+    font-family: 'Jost', sans-serif; font-size: 0.62rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 13px;
+    cursor: pointer; transition: border-color .15s;
+  }
+  .btn-ghost:hover { border-color: var(--ink3); }
+
+  /* DETAIL */
+  .detail { background: var(--bg); min-height: 100vh; }
+  .detail-bar {
+    padding: 11px 20px; background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .back-btn {
+    background: none; border: 1px solid var(--line2); color: var(--ink2);
+    font-family: 'Jost', sans-serif; font-size: 0.62rem; font-weight: 500;
+    letter-spacing: 0.08em; padding: 6px 11px; cursor: pointer;
+    flex-shrink: 0; transition: border-color .15s; white-space: nowrap;
+  }
+  .back-btn:hover { border-color: var(--ink2); }
+  .detail-bar-title {
+    font-family: 'Cormorant', serif; font-weight: 600; font-style: italic;
+    font-size: 0.93rem; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .yt-wrap { width: 100%; background: #0a0a0a; }
+  .yt-wrap iframe { width: 100%; aspect-ratio: 16/9; display: block; border: none; }
+
+  .detail-info { padding: 15px 20px 13px; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .detail-kind {
+    font-size: 0.56rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--rust); margin-bottom: 7px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .detail-kind::after { content: ''; flex: 1; height: 1px; background: var(--rust2); }
+  .detail-title { font-family: 'Cormorant', serif; font-weight: 700; font-size: 1.45rem; color: var(--ink); line-height: 1.15; margin-bottom: 4px; }
+  .detail-byline { font-size: 0.78rem; color: var(--ink3); margin-bottom: 11px; }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag { font-size: 0.58rem; font-weight: 500; letter-spacing: 0.07em; padding: 3px 8px; background: var(--bg2); border: 1px solid var(--line); color: var(--ink3); }
+
+  .tabs { display: flex; background: var(--paper); border-bottom: 2px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; padding: 10px 15px; background: none; border: none;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    color: var(--ink3); font-family: 'Jost', sans-serif; font-size: 0.67rem;
+    font-weight: 500; letter-spacing: 0.06em; cursor: pointer; white-space: nowrap;
+    transition: color .15s;
+  }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--rust); }
+
+  /* QUOTE LIST */
+  .quote-list { padding: 6px 0; }
+  .quote-item {
+    display: flex; gap: 11px; padding: 13px 20px;
+    border-bottom: 1px solid var(--line); background: var(--paper);
+    align-items: flex-start; animation: rise .22s ease both;
+  }
+  .q-ts {
+    font-size: 0.57rem; font-weight: 600; letter-spacing: 0.1em;
+    color: var(--rust); background: var(--rust2);
+    border: 1px solid rgba(124,58,26,0.15);
+    padding: 2px 7px; flex-shrink: 0; margin-top: 4px; white-space: nowrap;
+  }
+  .q-text {
+    font-family: 'Cormorant', serif; font-style: italic;
+    font-size: 0.95rem; color: var(--ink2); line-height: 1.62; flex: 1;
+  }
+  .q-del { background: none; border: none; color: var(--ink4); font-size: 0.68rem; cursor: pointer; flex-shrink: 0; padding: 2px; margin-top: 3px; transition: color .15s; }
+  .q-del:hover { color: var(--del); }
+
+  .analysis-body { padding: 18px 20px; font-family: 'Cormorant', serif; font-size: 0.97rem; color: var(--ink2); line-height: 1.75; white-space: pre-line; }
+
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 16px 20px; }
+  .score-ph {
+    aspect-ratio: 3/4; background: var(--paper); border: 1px dashed var(--line2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; cursor: pointer; color: var(--ink4); transition: border-color .15s, color .15s;
+  }
+  .score-ph:hover { border-color: var(--rust); color: var(--rust); }
+  .score-ph-icon { font-size: 1.3rem; opacity: 0.3; }
+  .score-ph-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+
+  .empty { padding: 30px 20px; font-family: 'Cormorant', serif; font-style: italic; font-size: 0.93rem; color: var(--ink4); text-align: center; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+`;
+
+// ── DATA ──
+const NOW = new Date();
+const fmt = (d, opt) => d.toLocaleDateString("en-US", opt);
+
+const CHRONICLE_DATA = [
+  { id: 1, kind: "note",   date: "Today",     time: "10:42", title: "On the nature of slow practice", sub: null,            excerpt: "Practicing slowly is not practicing badly. I am programming the nervous system — speed is the result, not the method." },
+  { id: 2, kind: "music",  date: "Today",     time: "09:15", title: "Ballade No. 1 in G minor",       sub: "Frédéric Chopin", excerpt: "Added analysis on the coda — harmonic collapse, not just technical fireworks." },
+  { id: 3, kind: "mc",     date: "Yesterday", time: "21:30", title: "Chopin Interpretation",           sub: "Kissin · Juilliard", excerpt: '"Rubato is not freedom from time — it is freedom within time."' },
+  { id: 4, kind: "comp",   date: "Yesterday", time: "18:00", title: "Franz Liszt",                    sub: "Biography",      excerpt: "Added section on the Weimar years and his pedagogy — taught for free, never took a fee." },
+  { id: 5, kind: "method", date: "Mar 25",    time: "16:20", title: "The Art of Piano Playing",       sub: "Heinrich Neuhaus", excerpt: "Chapter 3: on tone production. The arm must be an extension of the will, not a tool." },
+  { id: 6, kind: "note",   date: "Mar 25",    time: "11:00", title: "Wrist tension — note to self",  sub: null,            excerpt: "Stop playing through the pain. Rest, then revisit Perahia on arm weight." },
+  { id: 7, kind: "music",  date: "Mar 23",    time: "20:10", title: "Nocturne in E-flat, Op. 9 No. 2", sub: "Frédéric Chopin", excerpt: "Every ornament is a vocal riff. Sing the melody before playing it." },
+];
+
+const KIND_LABEL = { note: "Journal", music: "Music", mc: "Masterclass", comp: "Composer", method: "Method Book" };
+
+const COMPOSERS = [
+  { id: 1, name: "Bach, Johann Sebastian",  dates: "1685–1750", era: "Baroque",    init: "B", notes: 8 },
+  { id: 2, name: "Beethoven, Ludwig van",    dates: "1770–1827", era: "Classical",  init: "B", notes: 14 },
+  { id: 3, name: "Chopin, Frédéric",         dates: "1810–1849", era: "Romantic",   init: "C", notes: 22 },
+  { id: 4, name: "Debussy, Claude",          dates: "1862–1918", era: "Impressionist", init: "D", notes: 6 },
+  { id: 5, name: "Liszt, Franz",             dates: "1811–1886", era: "Romantic",   init: "L", notes: 11 },
+  { id: 6, name: "Rachmaninoff, Sergei",     dates: "1873–1943", era: "Romantic",   init: "R", notes: 9 },
+  { id: 7, name: "Schubert, Franz",          dates: "1797–1828", era: "Romantic",   init: "S", notes: 5 },
+];
+
+const METHODS = [
+  { id: 1, init: "N", title: "The Art of Piano Playing",  author: "Heinrich Neuhaus",  year: 1958, notes: 12 },
+  { id: 2, init: "W", title: "The Pianist's Way",         author: "Abby Whiteside",    year: 1955, notes: 4 },
+  { id: 3, init: "B", title: "Piano Technique",           author: "Walter Gieseking",  year: 1932, notes: 7 },
+  { id: 4, init: "C", title: "On Piano Playing",          author: "György Sándor",     year: 1981, notes: 3 },
+];
+
+const MUSIC_DATA = [
+  { id: 10, title: "Ballade No. 1 in G minor, Op. 23",   composer: "Chopin",       era: "Romantic",  ytId: "VmFmAvuKMOg", tags: ["ballade","romantic"],   analysis: "The opening narrative theme must emerge from silence — never forced. Think of it as a storyteller clearing his throat.\n\nThe development is a long escalation; resist the urge to rush. The coda represents total emotional collapse — technically and expressively the climax of the entire piece." },
+  { id: 11, title: "Nocturne in E-flat, Op. 9 No. 2",    composer: "Chopin",       era: "Romantic",  ytId: "tgbNymZ7vqY", tags: ["nocturne","cantabile"], analysis: "Sing the melody before you play it. Every ornament is a vocal flourish — never mechanical.\n\nThe bass should be warm, never intrusive. Pedaling is everything here." },
+  { id: 12, title: "Piano Sonata in B minor, S. 178",     composer: "Liszt",        era: "Romantic",  ytId: "dQw4w9WgXcQ", tags: ["sonata","virtuoso"],    analysis: "A single-movement arch that contains four movements within one. The fugue section is the intellectual core — do not turn it into noise." },
+  { id: 13, title: "Goldberg Variations, BWV 988",        composer: "Bach",         era: "Baroque",   ytId: "tgbNymZ7vqY", tags: ["variations","baroque"], analysis: "The Aria is the seed — everything grows from it and returns to it. Each variation is a different light on the same object." },
+  { id: 14, title: "Clair de lune, L. 75 No. 3",         composer: "Debussy",      era: "Impressionist", ytId: "VmFmAvuKMOg", tags: ["impressionism"], analysis: "Never count. This music floats. The left hand is the tide, the right hand is moonlight on water." },
+];
+
+const MASTERCLASSES_DATA = [
+  { id: 1, title: "Chopin Interpretation", author: "Evgeny Kissin", year: 2019, era: "Romantic", ytId: "VmFmAvuKMOg", tags: ["chopin","rubato","phrasing"],
+    quotes: [
+      { id: 1, ts: "03:22", text: "Rubato is not freedom from time — it is freedom within time. The left hand holds the pulse; the right hand breathes." },
+      { id: 2, ts: "11:47", text: "The pedal must arrive slightly before the note. You are creating an atmosphere, not just a sound." },
+      { id: 3, ts: "24:10", text: "Never push a phrase. Let it find its own weight — like water finding its level." },
+    ]},
+  { id: 2, title: "The Art of Octaves — Liszt", author: "Murray Perahia", year: 2017, era: "Romantic", ytId: "tgbNymZ7vqY", tags: ["liszt","technique","octaves"],
+    quotes: [
+      { id: 1, ts: "05:30", text: "The arm must be completely free. Any tension will kill the sound before it reaches the key." },
+    ]},
+  { id: 3, title: "Bach on the Modern Piano", author: "András Schiff", year: 2020, era: "Baroque", ytId: "dQw4w9WgXcQ", tags: ["bach","articulation"],
+    quotes: [
+      { id: 1, ts: "08:14", text: "Bach wrote for fingers that think. Every note is a word. Every phrase is a sentence." },
+    ]},
+];
+
+const NOTES_DATA = [
+  { id: 1, date: "Mar 27, 2026", title: "On the nature of slow practice", text: "Practicing slowly is not the same as practicing badly. When I slow down, I am programming the nervous system. Speed is the result, not the method. Every passage has a minimum useful tempo — find that threshold before pushing." },
+  { id: 2, date: "Mar 23, 2026", title: "The coda problem", text: "The Ballade coda is still a disaster. The issue isn't speed — it's that I don't understand the harmonic structure. Must analyze the modulations before next session. Playing without understanding is memorizing noise." },
+  { id: 3, date: "Mar 21, 2026", title: "Wrist tension — note to self", text: "Wrist tension returning in octave passages. Stop playing through it. Rest, then return to the Perahia masterclass on arm weight. The hand should fall, not strike." },
+];
+
+const ERAS = ["All", "Baroque", "Classical", "Romantic", "Impressionist", "Modern"];
+
+// group by first letter
+function alphaGroups(arr, getKey) {
+  const groups = {};
+  [...arr].sort((a, b) => getKey(a).localeCompare(getKey(b))).forEach(item => {
+    const letter = getKey(item)[0].toUpperCase();
+    if (!groups[letter]) groups[letter] = [];
+    groups[letter].push(item);
+  });
+  return groups;
+}
+
+export default function App() {
+  const [screen, setScreen] = useState("chronicle");
+  const [compSub, setCompSub] = useState("composers");
+  const [eraFilter, setEraFilter] = useState("All");
+  const [mcEraFilter, setMcEraFilter] = useState("All");
+  const [masterclasses, setMasterclasses] = useState(MASTERCLASSES_DATA);
+  const [notes, setNotes] = useState(NOTES_DATA);
+  const [detail, setDetail] = useState(null);
+  const [detailKind, setDetailKind] = useState(null);
+  const [tab, setTab] = useState("quotes");
+  const [newQ, setNewQ] = useState("");
+  const [showNoteForm, setShowNoteForm] = useState(false);
+  const [nTitle, setNTitle] = useState("");
+  const [nText, setNText] = useState("");
+
+  const openMC = (mc) => { setDetail(mc); setDetailKind("mc"); setTab("quotes"); setScreen("detail"); };
+  const openPiece = (p) => { setDetail(p); setDetailKind("piece"); setTab("analysis"); setScreen("detail"); };
+
+  const addQuote = () => {
+    if (!newQ.trim()) return;
+    const q = { id: Date.now(), ts: "—", text: newQ.trim() };
+    setMasterclasses(ms => ms.map(m => m.id === detail.id ? { ...m, quotes: [...m.quotes, q] } : m));
+    setDetail(d => ({ ...d, quotes: [...d.quotes, q] }));
+    setNewQ("");
+  };
+  const delQuote = (qid) => {
+    setMasterclasses(ms => ms.map(m => m.id === detail.id ? { ...m, quotes: m.quotes.filter(q => q.id !== qid) } : m));
+    setDetail(d => ({ ...d, quotes: d.quotes.filter(q => q.id !== qid) }));
+  };
+  const addNote = () => {
+    if (!nText.trim()) return;
+    const n = { id: Date.now(), date: fmt(NOW, { month: "short", day: "numeric", year: "numeric" }), title: nTitle.trim() || "Untitled", text: nText.trim() };
+    setNotes(prev => [n, ...prev]);
+    setNTitle(""); setNText(""); setShowNoteForm(false);
+  };
+
+  const filteredMusic = eraFilter === "All" ? MUSIC_DATA : MUSIC_DATA.filter(p => p.era === eraFilter);
+  const filteredMC = mcEraFilter === "All" ? masterclasses : masterclasses.filter(m => m.era === mcEraFilter);
+
+  const musicGroups = alphaGroups(filteredMusic, p => p.composer);
+  const mcGroups    = alphaGroups(filteredMC, m => m.author.split(" ").slice(-1)[0]);
+  const compGroups  = alphaGroups(COMPOSERS, c => c.name);
+
+  const backScreen = detailKind === "mc" ? "masterclasses" : "music";
+
+  return (
+    <div className="app">
+      <style>{STYLE}</style>
+
+      {screen !== "detail" && (
+        <div className="shell">
+          <div className="site-header">
+            <div className="header-row">
+              <h1 className="site-title">Leshukov <em>Music Knowledge</em></h1>
+              <span className="site-tag">Personal · EN</span>
+            </div>
+            <nav className="nav">
+              {[
+                { id: "chronicle",     label: "Chronicle" },
+                { id: "compendium",    label: "Compendium" },
+                { id: "music",         label: "Music" },
+                { id: "masterclasses", label: "Masterclasses" },
+                { id: "notes",         label: "Notes" },
+              ].map(n => (
+                <button key={n.id} className={`nav-btn ${screen === n.id ? "active" : ""}`} onClick={() => setScreen(n.id)}>
+                  {n.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* ── CHRONICLE ── */}
+      {screen === "chronicle" && (
+        <div className="section">
+          {["Today", "Yesterday", "Mar 25", "Mar 23"].map(day => {
+            const entries = CHRONICLE_DATA.filter(e => e.date === day);
+            if (!entries.length) return null;
+            return (
+              <div key={day} className="chronicle-date-group">
+                <div className="day-label">{day}</div>
+                {entries.map((e, i) => (
+                  <div key={e.id} className="c-entry" style={{ animationDelay: `${i * 0.05}s` }}>
+                    <div className={`c-bar ${e.kind}`} />
+                    <div className="c-body">
+                      <div className="c-meta">
+                        <span className="c-kind">{KIND_LABEL[e.kind]}</span>
+                        {e.sub && <><span className="c-dot" /><span className="c-time">{e.sub}</span></>}
+                      </div>
+                      <div className="c-title">{e.title}</div>
+                      {e.excerpt && <div className="c-excerpt">{e.excerpt}</div>}
+                    </div>
+                    <div className="c-chev">›</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── COMPENDIUM ── */}
+      {screen === "compendium" && (
+        <div className="section">
+          <div className="sub-nav">
+            {[{id:"composers",label:"Composers"},{id:"methods",label:"Method Books"}].map(s => (
+              <button key={s.id} className={`sub-btn ${compSub === s.id ? "active" : ""}`} onClick={() => setCompSub(s.id)}>{s.label}</button>
+            ))}
+          </div>
+
+          {compSub === "composers" && (
+            <>
+              {Object.entries(compGroups).map(([letter, items]) => (
+                <div key={letter}>
+                  <div className="alpha-sep">{letter}</div>
+                  {items.map((c, i) => (
+                    <div key={c.id} className="row" style={{ animationDelay: `${i * 0.05}s` }}>
+                      <div className="row-av blue">{c.init}</div>
+                      <div className="row-main">
+                        <div className="row-title">{c.name}</div>
+                        <div className="row-sub">{c.dates} · {c.era}</div>
+                      </div>
+                      <div className="row-count">{c.notes} notes</div>
+                      <div className="row-chev">›</div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <button className="add-row"><div className="add-icon">+</div>Add composer</button>
+            </>
+          )}
+
+          {compSub === "methods" && (
+            <>
+              {METHODS.map((m, i) => (
+                <div key={m.id} className="row" style={{ animationDelay: `${i * 0.06}s` }}>
+                  <div className="row-av purple">{m.init}</div>
+                  <div className="row-main">
+                    <div className="row-title">{m.title}</div>
+                    <div className="row-sub">{m.author} · {m.year}</div>
+                  </div>
+                  <div className="row-count">{m.notes} notes</div>
+                  <div className="row-chev">›</div>
+                </div>
+              ))}
+              <button className="add-row"><div className="add-icon">+</div>Add book</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── MUSIC ── */}
+      {screen === "music" && (
+        <div className="section">
+          <div className="filter-bar">
+            {ERAS.map(e => (
+              <button key={e} className={`pill ${eraFilter === e ? "active" : ""}`} onClick={() => setEraFilter(e)}>{e}</button>
+            ))}
+          </div>
+          {Object.entries(musicGroups).map(([letter, pieces]) => (
+            <div key={letter}>
+              <div className="alpha-sep">{letter}</div>
+              {pieces.map((p, i) => (
+                <div key={p.id} className="row" style={{ animationDelay: `${i * 0.05}s` }} onClick={() => openPiece(p)}>
+                  <div className="row-av green sym">♪</div>
+                  <div className="row-main">
+                    <div className="row-title">{p.title}</div>
+                    <div className="row-sub">{p.composer} · {p.era}</div>
+                  </div>
+                  <div className="row-chev">›</div>
+                </div>
+              ))}
+            </div>
+          ))}
+          {filteredMusic.length === 0 && <div className="empty">No pieces for this era yet.</div>}
+          <button className="add-row"><div className="add-icon">+</div>Add piece</button>
+        </div>
+      )}
+
+      {/* ── MASTERCLASSES ── */}
+      {screen === "masterclasses" && (
+        <div className="section">
+          <div className="filter-bar">
+            {ERAS.map(e => (
+              <button key={e} className={`pill ${mcEraFilter === e ? "active" : ""}`} onClick={() => setMcEraFilter(e)}>{e}</button>
+            ))}
+          </div>
+          {Object.entries(mcGroups).map(([letter, mcs]) => (
+            <div key={letter}>
+              <div className="alpha-sep">{letter}</div>
+              {mcs.map((mc, i) => (
+                <div key={mc.id} className="row" style={{ animationDelay: `${i * 0.05}s` }} onClick={() => openMC(mc)}>
+                  <div className="row-av sym" style={{ fontStyle:"normal", fontSize:"0.8rem", background:"rgba(122,90,42,0.1)", borderColor:"rgba(122,90,42,0.18)", color:"#7a5a2a" }}>▶</div>
+                  <div className="row-main">
+                    <div className="row-title">{mc.title}</div>
+                    <div className="row-sub">{mc.author} · {mc.year}</div>
+                  </div>
+                  <div className="row-count">{mc.quotes.length} phrases</div>
+                  <div className="row-chev">›</div>
+                </div>
+              ))}
+            </div>
+          ))}
+          {filteredMC.length === 0 && <div className="empty">No masterclasses for this era yet.</div>}
+          <button className="add-row"><div className="add-icon">+</div>Add masterclass</button>
+        </div>
+      )}
+
+      {/* ── NOTES ── */}
+      {screen === "notes" && (
+        <div className="section">
+          {showNoteForm ? (
+            <div className="input-block">
+              <div className="input-label">New entry — {fmt(NOW, { month: "long", day: "numeric" })}</div>
+              <input placeholder="Title" value={nTitle} onChange={e => setNTitle(e.target.value)} />
+              <textarea placeholder="What happened at the piano today…" value={nText} onChange={e => setNText(e.target.value)} style={{ minHeight: 100 }} />
+              <div className="input-row">
+                <button className="btn-ghost" onClick={() => setShowNoteForm(false)}>Cancel</button>
+                <button className="btn" onClick={addNote}>Save entry</button>
+              </div>
+            </div>
+          ) : (
+            <button className="add-row" onClick={() => setShowNoteForm(true)}><div className="add-icon">+</div>New journal entry</button>
+          )}
+          {notes.map((n, i) => (
+            <div key={n.id} className="note-item" style={{ animationDelay: `${i * 0.06}s` }}>
+              <div className="note-date">{n.date}</div>
+              <div className="note-title">{n.title}</div>
+              <div className="note-text">{n.text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── DETAIL ── */}
+      {screen === "detail" && detail && (
+        <div className="detail">
+          <div className="detail-bar">
+            <button className="back-btn" onClick={() => setScreen(backScreen)}>← Back</button>
+            <div className="detail-bar-title">{detail.title}</div>
+          </div>
+          <div className="yt-wrap">
+            <iframe src={`https://www.youtube.com/embed/${detail.ytId}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen title={detail.title} />
+          </div>
+          <div className="detail-info">
+            <div className="detail-kind">{detailKind === "mc" ? "Masterclass" : "Music"}</div>
+            <div className="detail-title">{detail.title}</div>
+            <div className="detail-byline">{detail.author || detail.composer} {detail.year ? `· ${detail.year}` : ""}</div>
+            <div className="tags">{(detail.tags || []).map(t => <span key={t} className="tag">{t}</span>)}</div>
+          </div>
+          <div className="tabs">
+            {(detailKind === "mc"
+              ? [{ id: "quotes", label: `Key Phrases (${detail.quotes.length})` }]
+              : [{ id: "analysis", label: "Analysis" }, { id: "scores", label: "Score" }]
+            ).map(t => (
+              <button key={t.id} className={`tab-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>{t.label}</button>
+            ))}
+          </div>
+
+          {detailKind === "mc" && tab === "quotes" && (
+            <>
+              <div className="input-block">
+                <div className="input-label">Add key phrase</div>
+                <textarea placeholder="A remarkable insight — include timestamp in your text if needed…" value={newQ} onChange={e => setNewQ(e.target.value)} />
+                <div className="input-row"><button className="btn" onClick={addQuote}>Save phrase</button></div>
+              </div>
+              <div className="quote-list">
+                {detail.quotes.length === 0
+                  ? <div className="empty">No phrases saved yet.</div>
+                  : detail.quotes.map((q, i) => (
+                    <div key={q.id} className="quote-item" style={{ animationDelay: `${i * 0.05}s` }}>
+                      <span className="q-ts">{q.ts}</span>
+                      <span className="q-text">{q.text}</span>
+                      <button className="q-del" onClick={() => delQuote(q.id)}>✕</button>
+                    </div>
+                  ))
+                }
+              </div>
+            </>
+          )}
+          {detailKind === "piece" && tab === "analysis" && (
+            <div className="analysis-body">{detail.analysis || <span style={{color:"var(--ink4)",fontStyle:"italic"}}>No analysis written yet.</span>}</div>
+          )}
+          {detailKind === "piece" && tab === "scores" && (
+            <div className="score-grid">
+              <div className="score-ph"><div className="score-ph-icon">♩</div><div className="score-ph-label">Add page</div></div>
+              <div className="score-ph"><div className="score-ph-icon">♩</div><div className="score-ph-label">Add page</div></div>
+            </div>
+          )}
+          <div style={{ height: 60 }} />
+        </div>
+      )}
+    </div>
+  );
+}
