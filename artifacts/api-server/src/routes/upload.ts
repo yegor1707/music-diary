@@ -3,6 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { logger } from "../lib/logger.js";
+import { ObjectStorageService } from "../lib/objectStorage.js";
 
 const router: IRouter = Router();
 
@@ -31,14 +32,35 @@ const upload = multer({
   },
 });
 
-router.post("/upload", upload.single("file"), (req, res) => {
+const objectStorageService = new ObjectStorageService();
+
+router.post("/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
     res.status(400).json({ error: "No file uploaded" });
     return;
   }
-  const url = `/api/uploads/${req.file.filename}`;
-  logger.info({ filename: req.file.filename }, "File uploaded");
-  res.json({ url });
+
+  try {
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+
+    await fetch(uploadURL, {
+      method: "PUT",
+      headers: { "Content-Type": req.file.mimetype },
+      body: fileBuffer,
+    });
+
+    fs.unlinkSync(req.file.path);
+
+    const serveUrl = `/api/storage${objectPath}`;
+    logger.info({ objectPath, serveUrl }, "File uploaded to object storage");
+    res.json({ url: serveUrl });
+  } catch (err) {
+    logger.error({ err }, "GCS upload failed, falling back to local");
+    const localUrl = `/api/uploads/${req.file.filename}`;
+    res.json({ url: localUrl });
+  }
 });
 
 router.get("/uploads/:filename", (req, res) => {

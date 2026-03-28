@@ -8,6 +8,36 @@
 import * as zod from "zod";
 
 /**
+ * @summary Get a random AI-generated musical inspiration
+ */
+export const GetMusicalInspirationResponse = zod.object({
+  type: zod.enum(["quote", "fact", "recommendation"]),
+  content: zod.string(),
+  author: zod.string().nullish(),
+  workTitle: zod.string().nullish(),
+  youtubeId: zod.string().nullish(),
+});
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string(),
+  size: zod.number(),
+  contentType: zod.string(),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string(),
+  objectPath: zod.string(),
+  metadata: zod.object({
+    name: zod.string(),
+    size: zod.number(),
+    contentType: zod.string(),
+  }),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -37,6 +67,7 @@ export const ListPiecesResponseItem = zod.object({
   genre: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
   imageUrl: zod.string().nullish(),
+  sheetMusicUrl: zod.string().nullish(),
   content: zod.string().nullish(),
   tags: zod.array(zod.string()),
   createdAt: zod.string(),
@@ -55,6 +86,7 @@ export const CreatePieceBody = zod.object({
   genre: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
   imageUrl: zod.string().nullish(),
+  sheetMusicUrl: zod.string().nullish(),
   content: zod.string().nullish(),
   tags: zod.array(zod.string()).optional(),
 });
@@ -75,6 +107,7 @@ export const GetPieceResponse = zod.object({
   genre: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
   imageUrl: zod.string().nullish(),
+  sheetMusicUrl: zod.string().nullish(),
   content: zod.string().nullish(),
   tags: zod.array(zod.string()),
   createdAt: zod.string(),
@@ -96,6 +129,7 @@ export const UpdatePieceBody = zod.object({
   genre: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
   imageUrl: zod.string().nullish(),
+  sheetMusicUrl: zod.string().nullish(),
   content: zod.string().nullish(),
   tags: zod.array(zod.string()).optional(),
 });
@@ -109,6 +143,7 @@ export const UpdatePieceResponse = zod.object({
   genre: zod.string().nullish(),
   youtubeUrl: zod.string().nullish(),
   imageUrl: zod.string().nullish(),
+  sheetMusicUrl: zod.string().nullish(),
   content: zod.string().nullish(),
   tags: zod.array(zod.string()),
   createdAt: zod.string(),

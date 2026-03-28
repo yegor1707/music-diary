@@ -19,7 +19,43 @@ tags:
     description: Notes/longform essays
   - name: books
     description: Methodical books
+  - name: inspiration
+    description: AI-generated musical inspirations
+  - name: storage
+    description: Object storage
 paths:
+  /inspiration:
+    get:
+      operationId: getMusicalInspiration
+      tags: [inspiration]
+      summary: Get a random AI-generated musical inspiration
+      responses:
+        "200":
+          description: Musical inspiration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MusicalInspiration"
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlBody"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+
   /healthz:
     get:
       operationId: healthCheck
@@ -673,3 +709,52 @@ components:
           type: string
           nullable: true
       required: [title]
+
+    MusicalInspiration:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [quote, fact, recommendation]
+        content:
+          type: string
+        author:
+          type: string
+          nullable: true
+        workTitle:
+          type: string
+          nullable: true
+        youtubeId:
+          type: string
+          nullable: true
+      required: [type, content]
+
+    RequestUploadUrlBody:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+      required: [name, size, contentType]
+
+    RequestUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
+          required: [name, size, contentType]
+      required: [uploadURL, objectPath, metadata]

@@ -40,9 +40,6 @@ export default function MasterclassDetailPage() {
         )}
       </div>
 
-      <div className="mt-20 flex justify-center opacity-40">
-        <img src={`${import.meta.env.BASE_URL}images/ornament-2.png`} alt="" className="w-48" />
-      </div>
     </article>
   );
 }

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
 
+import HomePage from "@/pages/Home";
 import NotesPage from "@/pages/Notes";
 import NoteDetailPage from "@/pages/NoteDetail";
 import ComposersPage from "@/pages/Composers";

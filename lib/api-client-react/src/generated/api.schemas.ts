@@ -113,6 +113,41 @@ export interface BookInput {
   content?: string | null;
 }
 
+export type MusicalInspirationType =
+  (typeof MusicalInspirationType)[keyof typeof MusicalInspirationType];
+
+export const MusicalInspirationType = {
+  quote: "quote",
+  fact: "fact",
+  recommendation: "recommendation",
+} as const;
+
+export interface MusicalInspiration {
+  type: MusicalInspirationType;
+  content: string;
+  author?: string | null;
+  workTitle?: string | null;
+  youtubeId?: string | null;
+}
+
+export interface RequestUploadUrlBody {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export type RequestUploadUrlResponseMetadata = {
+  name: string;
+  size: number;
+  contentType: string;
+};
+
+export interface RequestUploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: RequestUploadUrlResponseMetadata;
+}
+
 export type UploadImageBody = {
   file: Blob;
 };

@@ -258,10 +258,6 @@ export default function PieceDetailPage() {
         </section>
       )}
 
-      <div className="mt-20 flex justify-center opacity-40">
-        <img src={`${import.meta.env.BASE_URL}images/ornament-2.png`} alt="" className="w-48" />
-      </div>
-
       <Modal isOpen={isEditInfoOpen} onClose={() => setIsEditInfoOpen(false)} title="Edit Piece Info">
         <PieceForm initialData={piece} onSuccess={() => setIsEditInfoOpen(false)} />
       </Modal>

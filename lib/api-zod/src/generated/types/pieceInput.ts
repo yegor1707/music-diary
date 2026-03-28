@@ -14,6 +14,7 @@ export interface PieceInput {
   genre?: string | null;
   youtubeUrl?: string | null;
   imageUrl?: string | null;
+  sheetMusicUrl?: string | null;
   content?: string | null;
   tags?: string[];
 }

@@ -65,9 +65,6 @@ export default function NoteDetailPage() {
         )}
       </div>
 
-      <div className="mt-20 flex justify-center opacity-40">
-        <img src={`${import.meta.env.BASE_URL}images/ornament-2.png`} alt="" className="w-48" />
-      </div>
 
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Journal Entry">
         <NoteForm initialData={note} onSuccess={() => setIsEditModalOpen(false)} />
