@@ -4,8 +4,41 @@ import { useListNotes } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Modal } from "@/components/ui/modal";
 import { NoteForm } from "@/components/Forms";
-import { Plus, GraduationCap, Search } from "lucide-react";
+import { Plus, GraduationCap, Search, PlayCircle } from "lucide-react";
 import { format } from "date-fns";
+
+function getYouTubeId(url: string): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0];
+    if (u.hostname.includes("youtube.com")) {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      const embedMatch = u.pathname.match(/\/embed\/([^/?]+)/);
+      if (embedMatch) return embedMatch[1];
+    }
+  } catch {}
+  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
+function YouTubeThumbnail({ url }: { url: string }) {
+  const videoId = getYouTubeId(url);
+  if (!videoId) return null;
+  const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  return (
+    <div className="relative w-full aspect-video bg-black overflow-hidden rounded-sm">
+      <img
+        src={thumbUrl}
+        alt="Video thumbnail"
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+      />
+      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+        <PlayCircle className="w-12 h-12 text-white drop-shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+      </div>
+    </div>
+  );
+}
 
 export default function MasterclassesPage() {
   const { data: allNotes, isLoading } = useListNotes();
@@ -58,34 +91,45 @@ export default function MasterclassesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {masterclasses.map((mc) => (
-            <Link key={mc.id} href={`/masterclasses/${mc.id}`} className="group block">
-              <article className="h-full bg-card notebook-border p-6 hover:bg-muted/30 hover:shadow-md transition-all relative overflow-hidden">
-                {mc.imageUrl && (
-                  <div className="absolute top-0 right-0 w-24 h-24 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-                    <img src={mc.imageUrl} alt="" className="w-full h-full object-cover rounded-bl-3xl mix-blend-multiply" />
+          {masterclasses.map((mc) => {
+            const videoId = mc.imageUrl ? getYouTubeId(mc.imageUrl) : null;
+            return (
+              <Link key={mc.id} href={`/masterclasses/${mc.id}`} className="group block">
+                <article className="h-full bg-card notebook-border overflow-hidden hover:shadow-md transition-all">
+                  {videoId ? (
+                    <YouTubeThumbnail url={mc.imageUrl!} />
+                  ) : mc.imageUrl ? (
+                    <div className="w-full aspect-video overflow-hidden">
+                      <img src={mc.imageUrl} alt={mc.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                  ) : (
+                    <div className="w-full aspect-video bg-muted/30 flex items-center justify-center">
+                      <GraduationCap className="w-12 h-12 text-muted-foreground/20" />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <div className="text-[0.65rem] font-sans font-semibold uppercase tracking-[0.2em] text-primary mb-2">
+                      {mc.createdAt ? format(new Date(mc.createdAt), "MMMM d, yyyy") : "Timeless"}
+                    </div>
+                    <h3 className="font-serif font-bold text-xl text-foreground leading-tight mb-1 group-hover:text-primary transition-colors">
+                      {mc.title}
+                    </h3>
+                    {mc.chapterTitle && (
+                      <p className="font-sans text-xs uppercase tracking-widest text-muted-foreground mb-3">
+                        {mc.chapterTitle}
+                      </p>
+                    )}
+                    <p className="font-serif italic text-muted-foreground line-clamp-2 leading-relaxed text-sm">
+                      {mc.content?.replace(/<[^>]*>?/gm, "").replace(/[\[\]{}'"]/g, "").substring(0, 150) || "No notes written yet."}
+                    </p>
+                    <div className="mt-4 flex items-center text-xs font-sans uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
+                      Open notes <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
                   </div>
-                )}
-                <div className="text-[0.65rem] font-sans font-semibold uppercase tracking-[0.2em] text-primary mb-3">
-                  {mc.createdAt ? format(new Date(mc.createdAt), "MMMM d, yyyy") : "Timeless"}
-                </div>
-                <h3 className="font-serif font-bold text-2xl text-foreground leading-tight mb-2 group-hover:text-primary transition-colors">
-                  {mc.title}
-                </h3>
-                {mc.chapterTitle && (
-                  <p className="font-sans text-xs uppercase tracking-widest text-muted-foreground mb-4">
-                    {mc.chapterTitle}
-                  </p>
-                )}
-                <p className="font-serif italic text-muted-foreground line-clamp-3 leading-relaxed">
-                  {mc.content?.replace(/<[^>]*>?/gm, "").replace(/[\[\]{}'"]/g, "").substring(0, 200) || "No notes written yet."}
-                </p>
-                <div className="mt-6 flex items-center text-xs font-sans uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
-                  Read more <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                </div>
-              </article>
-            </Link>
-          ))}
+                </article>
+              </Link>
+            );
+          })}
         </div>
       )}
 

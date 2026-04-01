@@ -89,9 +89,12 @@ export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: {
   const create = useCreateNote();
   const update = useUpdateNote();
   
+  const effectiveSection = initialData?.section || defaultSection;
+  const isMasterclass = effectiveSection === "masterclasses";
+
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
-    section: initialData?.section || defaultSection,
+    section: effectiveSection,
     chapterTitle: initialData?.chapterTitle || "",
     content: initialData?.content || "",
     imageUrl: initialData?.imageUrl || "",
@@ -118,8 +121,18 @@ export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: {
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormGroup label="Title"><Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Title of your note" /></FormGroup>
       <FormGroup label="Chapter / Subtitle"><Input value={formData.chapterTitle} onChange={e => setFormData({...formData, chapterTitle: e.target.value})} placeholder="Optional subtitle" /></FormGroup>
-      <FormGroup label="Cover Image"><ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} /></FormGroup>
-      <FormGroup label="Content"><Textarea value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} placeholder="Write your thoughts here..." /></FormGroup>
+      {isMasterclass ? (
+        <FormGroup label="YouTube Video URL">
+          <Input
+            value={formData.imageUrl}
+            onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+            placeholder="https://www.youtube.com/watch?v=..."
+            type="url"
+          />
+        </FormGroup>
+      ) : (
+        <FormGroup label="Cover Image"><ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} /></FormGroup>
+      )}
       <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Note</Button></div>
     </form>
   );
@@ -243,7 +256,6 @@ export function ComposerForm({ initialData, onSuccess }: { initialData?: Compose
       </div>
       <FormGroup label="Nationality"><Input value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} placeholder="e.g. Polish" /></FormGroup>
       <FormGroup label="Portrait"><ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} /></FormGroup>
-      <FormGroup label="Biography"><Textarea value={formData.biography} onChange={e => setFormData({...formData, biography: e.target.value})} placeholder="Life notes..." /></FormGroup>
       <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Composer</Button></div>
     </form>
   );
@@ -288,7 +300,6 @@ export function BookForm({ initialData, onSuccess }: { initialData?: Book, onSuc
       </div>
       <FormGroup label="Cover Image"><ImageUpload value={formData.coverUrl} onChange={url => setFormData({...formData, coverUrl: url})} /></FormGroup>
       <FormGroup label="Synopsis"><Input value={formData.synopsis} onChange={e => setFormData({...formData, synopsis: e.target.value})} placeholder="Brief description" /></FormGroup>
-      <FormGroup label="Notes"><Textarea value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} placeholder="Your extensive notes on this book..." /></FormGroup>
       <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Book</Button></div>
     </form>
   );
