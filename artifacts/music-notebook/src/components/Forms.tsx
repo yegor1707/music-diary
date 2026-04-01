@@ -254,7 +254,6 @@ export function ComposerForm({ initialData, onSuccess }: { initialData?: Compose
         <FormGroup label="Born"><Input value={formData.born} onChange={e => setFormData({...formData, born: e.target.value})} placeholder="e.g. 1810" /></FormGroup>
         <FormGroup label="Died"><Input value={formData.died} onChange={e => setFormData({...formData, died: e.target.value})} placeholder="e.g. 1849" /></FormGroup>
       </div>
-      <FormGroup label="Nationality"><Input value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} placeholder="e.g. Polish" /></FormGroup>
       <FormGroup label="Portrait"><ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} /></FormGroup>
       <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Composer</Button></div>
     </form>

@@ -7,8 +7,9 @@ import { Modal } from "@/components/ui/modal";
 import { NoteForm } from "@/components/Forms";
 import { ArticleEditor, parseBlocks, serializeBlocks, type Block } from "@/components/ArticleEditor";
 import { ArticleRenderer } from "@/components/ArticleRenderer";
-import { Edit3, Trash2, Check, X, Loader2 } from "lucide-react";
+import { Edit3, Trash2, Check, X, Loader2, GraduationCap } from "lucide-react";
 import { format } from "date-fns";
+import { extractYouTubeId } from "@/lib/utils";
 
 export default function MasterclassDetailPage() {
   const [, params] = useRoute("/masterclasses/:id");
@@ -69,6 +70,8 @@ export default function MasterclassDetailPage() {
   if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Loading masterclass...</div>;
   if (!note) return <div className="text-center py-20 font-serif italic text-muted-foreground">Entry not found.</div>;
 
+  const ytId = extractYouTubeId(note.imageUrl);
+
   return (
     <article className="animate-in fade-in duration-700 max-w-4xl mx-auto">
       <header className="mb-8 relative pr-24">
@@ -100,6 +103,31 @@ export default function MasterclassDetailPage() {
           </div>
         )}
       </header>
+
+      {ytId ? (
+        <div className="mb-10 rounded-sm overflow-hidden notebook-border bg-black shadow-xl aspect-video w-full">
+          <iframe
+            src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1`}
+            title={note.title}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        </div>
+      ) : (
+        isEditing && (
+          <div
+            onClick={() => setIsEditInfoOpen(true)}
+            className="mb-10 aspect-video w-full border-2 border-dashed border-border/40 rounded-sm flex flex-col items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-primary/3 transition-all group"
+          >
+            <GraduationCap className="w-10 h-10 text-muted-foreground/30 group-hover:text-primary/40 mb-3 transition-colors" />
+            <span className="font-sans text-xs uppercase tracking-widest text-muted-foreground/50 group-hover:text-primary/60 transition-colors">
+              Click to add YouTube video
+            </span>
+          </div>
+        )
+      )}
 
       <section>
         {isEditing && !isEditingContent && (

@@ -171,9 +171,6 @@ export default function ComposerDetailPage() {
           ? <ArticleEditor blocks={blocks} onChange={setBlocks} mode="content" />
           : (
             <div className="bg-card notebook-border p-8 md:p-12 relative">
-              <div className="absolute -top-4 left-8 bg-background px-4 font-sans font-semibold text-xs tracking-widest text-muted-foreground uppercase">
-                Life & Work
-              </div>
               {composer.biography ? (
                 (() => {
                   try {
