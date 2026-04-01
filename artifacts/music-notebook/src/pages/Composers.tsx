@@ -1,31 +1,40 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { useListComposers } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Modal } from "@/components/ui/modal";
 import { ComposerForm } from "@/components/Forms";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 export default function ComposersPage() {
   const { data: composers, isLoading } = useListComposers();
   const { isEditing } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
-  if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Gathering masters...</div>;
+  const filtered = useMemo(() => {
+    if (!composers) return [];
+    if (!search.trim()) return composers;
+    return composers.filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.nationality || "").toLowerCase().includes(search.toLowerCase())
+    );
+  }, [composers, search]);
 
-  // Group by first letter
-  const grouped = composers?.reduce((acc, composer) => {
+  const grouped = filtered.reduce((acc, composer) => {
     const letter = composer.name.charAt(0).toUpperCase();
     if (!acc[letter]) acc[letter] = [];
     acc[letter].push(composer);
     return acc;
-  }, {} as Record<string, typeof composers>);
+  }, {} as Record<string, typeof filtered>);
 
-  const sortedLetters = Object.keys(grouped || {}).sort();
+  const sortedLetters = Object.keys(grouped).sort();
+
+  if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Gathering masters...</div>;
 
   return (
     <div className="animate-in fade-in duration-500 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif italic text-3xl text-foreground">Composers</h2>
         {isEditing && (
           <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
@@ -34,8 +43,24 @@ export default function ComposersPage() {
         )}
       </div>
 
-      {!composers || composers.length === 0 ? (
-        <div className="text-center py-20 italic font-serif text-muted-foreground">No composers found.</div>
+      <div className="flex items-center gap-2 mb-8 p-4 bg-card notebook-border">
+        <Search className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search composers by name or nationality..."
+          className="w-full bg-transparent text-foreground font-serif text-sm placeholder:text-muted-foreground/50 focus:outline-none"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="text-muted-foreground/50 hover:text-foreground transition-colors text-xs">✕</button>
+        )}
+      </div>
+
+      {!filtered || filtered.length === 0 ? (
+        <div className="text-center py-20 italic font-serif text-muted-foreground">
+          {search ? "No composers match your search." : "No composers found."}
+        </div>
       ) : (
         <div className="space-y-10">
           {sortedLetters.map(letter => (
@@ -45,7 +70,7 @@ export default function ComposersPage() {
                 <div className="flex-1 h-px bg-border/50"></div>
               </div>
               <div className="space-y-3">
-                {grouped![letter].map(composer => (
+                {grouped[letter].map(composer => (
                   <Link key={composer.id} href={`/composers/${composer.id}`} className="block group">
                     <div className="flex items-center gap-5 p-4 bg-card notebook-border hover:bg-muted/30 transition-colors">
                       {composer.imageUrl ? (

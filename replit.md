@@ -42,8 +42,14 @@ artifacts-monorepo/
 - **Section filtering**: notes table `section` field — "chronicle" | "masterclasses" | "notes" | "journal" etc.
 - **Composer photos**: Display portrait photo if available, elegant initial fallback
 - **Links**: Composer detail → linked pieces → piece detail page
-- **Rich content**: Text notes, image upload (`POST /api/upload`), YouTube embeds
-- **Books**: Cover image, synopsis header, then longread notes
+- **Search**: All list pages (Music, Composers, Masterclasses, Methodical Books, Notes) have search bars
+- **Rich block editor (ArticleEditor.tsx)**: Block types: text, heading, subheading, image (with size control: small/medium/large/full), score, pdf, quote, timestamp (Music only), video embed (non-Music sections)
+- **Timestamp blocks**: In Music/PieceDetail, clicking a timestamp seeks the YouTube player (postMessage API, `?enablejsapi=1`)
+- **Video embed blocks**: In Masterclass, Book, Composer editors — embeds YouTube videos inline
+- **MasterclassDetail**: Full block editor with edit/save flow, video embed support
+- **BookDetail**: Full block editor for Reading Notes section, video embed support
+- **ComposerDetail**: Classical book-cover portrait layout, block editor for biography, video embed support
+- **Notes**: Simple text + photo notes (plain text paragraphs, no block editor)
 
 ## Database Tables
 

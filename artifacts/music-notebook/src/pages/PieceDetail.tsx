@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRoute } from "wouter";
 import { useGetPiece, useUpdatePiece, useDeletePiece, getListPiecesQueryKey, getGetPieceQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,13 @@ import { cn } from "@/lib/utils";
 
 type Tab = "analysis" | "sheet-music";
 
+function parseTimeToSeconds(time: string): number {
+  const parts = time.trim().split(":").map(p => parseInt(p, 10));
+  if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
+  if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+  return parseInt(time, 10) || 0;
+}
+
 export default function PieceDetailPage() {
   const [, params] = useRoute("/pieces/:id");
   const pieceId = params?.id ? parseInt(params.id, 10) : 0;
@@ -26,6 +33,7 @@ export default function PieceDetailPage() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("analysis");
+  const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this piece?")) {
@@ -72,6 +80,21 @@ export default function PieceDetailPage() {
     }
   };
 
+  const handleTimestampClick = (time: string) => {
+    const seconds = parseTimeToSeconds(time);
+    if (ytIframeRef.current?.contentWindow) {
+      ytIframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
+        "*"
+      );
+      ytIframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+        "*"
+      );
+      ytIframeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Reading score...</div>;
   if (!piece) return <div className="text-center py-20 font-serif italic text-muted-foreground">Piece not found.</div>;
 
@@ -84,7 +107,6 @@ export default function PieceDetailPage() {
 
   return (
     <article className="animate-in fade-in duration-700 max-w-4xl mx-auto">
-      {/* Header */}
       <header className="mb-8 relative pr-24">
         <div className="text-[0.65rem] font-sans font-semibold uppercase tracking-[0.2em] text-primary mb-3">
           {piece.composer}{piece.year ? ` · ${piece.year}` : ""}
@@ -119,11 +141,11 @@ export default function PieceDetailPage() {
         )}
       </header>
 
-      {/* YouTube player — always at top */}
       {ytId ? (
         <div className="mb-10 rounded-sm overflow-hidden notebook-border bg-black shadow-xl aspect-video w-full">
           <iframe
-            src={`https://www.youtube.com/embed/${ytId}`}
+            ref={ytIframeRef}
+            src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1`}
             title={piece.title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -145,7 +167,6 @@ export default function PieceDetailPage() {
         )
       )}
 
-      {/* Tabs */}
       <div className="border-b border-border/40 mb-8">
         <div className="flex gap-0">
           {tabs.map(tab => (
@@ -166,7 +187,6 @@ export default function PieceDetailPage() {
         </div>
       </div>
 
-      {/* Analysis Tab */}
       {activeTab === "analysis" && (
         <section>
           {isEditing && !isEditingAnalysis && (
@@ -198,13 +218,12 @@ export default function PieceDetailPage() {
             </div>
           )}
           {isEditingAnalysis
-            ? <ArticleEditor blocks={blocks} onChange={setBlocks} />
-            : <ArticleRenderer content={piece.content} />
+            ? <ArticleEditor blocks={blocks} onChange={setBlocks} mode="piece" />
+            : <ArticleRenderer content={piece.content} onTimestampClick={handleTimestampClick} />
           }
         </section>
       )}
 
-      {/* Sheet Music Tab */}
       {activeTab === "sheet-music" && (
         <section>
           {piece.sheetMusicUrl ? (

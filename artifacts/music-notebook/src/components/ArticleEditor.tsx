@@ -2,17 +2,23 @@ import { useState, useRef } from "react";
 import { useUploadImage } from "@workspace/api-client-react";
 import { 
   Plus, Trash2, Image as ImageIcon, FileText, Quote, Type, 
-  Heading2, Music2, ChevronUp, ChevronDown, Loader2
+  Heading2, Music2, ChevronUp, ChevronDown, Loader2, Clock, Youtube
 } from "lucide-react";
+
+export type ImageSize = "small" | "medium" | "large" | "full";
 
 export type Block =
   | { id: string; type: "text"; content: string }
   | { id: string; type: "heading"; content: string }
   | { id: string; type: "subheading"; content: string }
-  | { id: string; type: "image"; url: string; caption: string }
-  | { id: string; type: "score"; url: string; caption: string }
+  | { id: string; type: "image"; url: string; caption: string; size?: ImageSize }
+  | { id: string; type: "score"; url: string; caption: string; size?: ImageSize }
   | { id: string; type: "pdf"; url: string; title: string }
-  | { id: string; type: "quote"; content: string };
+  | { id: string; type: "quote"; content: string }
+  | { id: string; type: "timestamp"; time: string; label: string }
+  | { id: string; type: "video"; url: string; caption: string };
+
+export type EditorMode = "piece" | "content" | "notes";
 
 function genId() {
   return Math.random().toString(36).slice(2);
@@ -43,6 +49,8 @@ const BLOCK_LABELS: Record<Block["type"], string> = {
   score: "Score Fragment",
   pdf: "PDF Document",
   quote: "Musical Quote",
+  timestamp: "Timestamp",
+  video: "Video",
 };
 
 const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
@@ -53,9 +61,17 @@ const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
   score: <Music2 className="w-3.5 h-3.5" />,
   pdf: <FileText className="w-3.5 h-3.5" />,
   quote: <Quote className="w-3.5 h-3.5" />,
+  timestamp: <Clock className="w-3.5 h-3.5" />,
+  video: <Youtube className="w-3.5 h-3.5" />,
 };
 
-const ADD_BLOCK_TYPES: Block["type"][] = ["text", "heading", "subheading", "image", "score", "pdf", "quote"];
+function getBlockTypes(mode: EditorMode): Block["type"][] {
+  const base: Block["type"][] = ["text", "heading", "subheading", "image", "score", "pdf", "quote"];
+  if (mode === "piece") return [...base, "timestamp"];
+  if (mode === "content") return [...base, "video"];
+  if (mode === "notes") return ["text", "heading", "image", "quote"];
+  return base;
+}
 
 function FileUploadButton({ onUpload, accept = "image/*" }: { onUpload: (url: string) => void; accept?: string }) {
   const upload = useUploadImage();
@@ -79,6 +95,13 @@ function FileUploadButton({ onUpload, accept = "image/*" }: { onUpload: (url: st
     </label>
   );
 }
+
+const SIZE_OPTIONS: { value: ImageSize; label: string }[] = [
+  { value: "small", label: "Small (25%)" },
+  { value: "medium", label: "Medium (50%)" },
+  { value: "large", label: "Large (75%)" },
+  { value: "full", label: "Full width" },
+];
 
 function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast }: {
   block: Block;
@@ -147,15 +170,29 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
             />
           </div>
           {block.url && (
-            <img src={block.url} alt="" className="max-h-64 w-auto rounded-sm border border-border/30 object-contain" />
+            <img src={block.url} alt="" className="max-h-48 w-auto rounded-sm border border-border/30 object-contain" />
           )}
-          <input
-            type="text"
-            value={block.caption}
-            onChange={e => onChange({ ...block, caption: e.target.value })}
-            placeholder="Caption (optional)..."
-            className={`${baseInput} text-sm text-muted-foreground`}
-          />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Size:</label>
+              <select
+                value={block.size || "full"}
+                onChange={e => onChange({ ...block, size: e.target.value as ImageSize })}
+                className="bg-card border border-border/40 text-foreground font-sans text-xs px-2 py-1 rounded-sm focus:outline-none focus:border-primary"
+              >
+                {SIZE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <input
+              type="text"
+              value={block.caption}
+              onChange={e => onChange({ ...block, caption: e.target.value })}
+              placeholder="Caption (optional)..."
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+            />
+          </div>
         </div>
       )}
 
@@ -181,6 +218,52 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
           />
         </div>
       )}
+
+      {block.type === "timestamp" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary/60 flex-shrink-0" />
+              <input
+                type="text"
+                value={block.time}
+                onChange={e => onChange({ ...block, time: e.target.value })}
+                placeholder="1:23 or 12:34"
+                className="w-24 bg-transparent border-b border-border/50 pb-1 text-foreground font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              />
+            </div>
+            <input
+              type="text"
+              value={block.label}
+              onChange={e => onChange({ ...block, label: e.target.value })}
+              placeholder="Description (e.g. Development section starts)"
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-foreground font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+            />
+          </div>
+          <p className="text-[0.6rem] font-sans text-muted-foreground/60 uppercase tracking-widest">
+            Clicking this timestamp will seek to that moment in the YouTube recording above.
+          </p>
+        </div>
+      )}
+
+      {block.type === "video" && (
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={block.url}
+            onChange={e => onChange({ ...block, url: e.target.value })}
+            placeholder="YouTube URL (https://www.youtube.com/watch?v=...)"
+            className="w-full bg-transparent border-b border-border/50 pb-1.5 text-foreground font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+          />
+          <input
+            type="text"
+            value={block.caption}
+            onChange={e => onChange({ ...block, caption: e.target.value })}
+            placeholder="Caption (optional)..."
+            className={`${baseInput} text-sm text-muted-foreground`}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -191,15 +274,22 @@ function createBlock(type: Block["type"]): Block {
     case "text": return { id, type: "text", content: "" };
     case "heading": return { id, type: "heading", content: "" };
     case "subheading": return { id, type: "subheading", content: "" };
-    case "image": return { id, type: "image", url: "", caption: "" };
-    case "score": return { id, type: "score", url: "", caption: "" };
+    case "image": return { id, type: "image", url: "", caption: "", size: "full" };
+    case "score": return { id, type: "score", url: "", caption: "", size: "full" };
     case "pdf": return { id, type: "pdf", url: "", title: "" };
     case "quote": return { id, type: "quote", content: "" };
+    case "timestamp": return { id, type: "timestamp", time: "", label: "" };
+    case "video": return { id, type: "video", url: "", caption: "" };
   }
 }
 
-export function ArticleEditor({ blocks, onChange }: { blocks: Block[]; onChange: (b: Block[]) => void }) {
+export function ArticleEditor({ blocks, onChange, mode = "content" }: { 
+  blocks: Block[]; 
+  onChange: (b: Block[]) => void;
+  mode?: EditorMode;
+}) {
   const [showMenu, setShowMenu] = useState(false);
+  const addBlockTypes = getBlockTypes(mode);
 
   const updateBlock = (idx: number, b: Block) => {
     const next = [...blocks];
@@ -249,7 +339,7 @@ export function ArticleEditor({ blocks, onChange }: { blocks: Block[]; onChange:
         </button>
         {showMenu && (
           <div className="absolute bottom-full mb-1 left-0 right-0 bg-card notebook-border rounded-sm shadow-xl z-20 p-2 grid grid-cols-2 gap-1">
-            {ADD_BLOCK_TYPES.map(type => (
+            {addBlockTypes.map(type => (
               <button
                 key={type}
                 type="button"
