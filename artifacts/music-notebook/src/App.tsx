@@ -1,54 +1,91 @@
+import { lazy, Suspense, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
+import {
+  getListPiecesQueryOptions,
+  getListComposersQueryOptions,
+  getListNotesQueryOptions,
+  getListBooksQueryOptions,
+} from "@workspace/api-client-react";
 
-import HomePage from "@/pages/Home";
-import NotesPage from "@/pages/Notes";
-import NoteDetailPage from "@/pages/NoteDetail";
-import ComposersPage from "@/pages/Composers";
-import ComposerDetailPage from "@/pages/ComposerDetail";
-import PiecesPage from "@/pages/Pieces";
-import PieceDetailPage from "@/pages/PieceDetail";
-import BooksPage from "@/pages/Books";
-import BookDetailPage from "@/pages/BookDetail";
-import MasterclassesPage from "@/pages/Masterclasses";
+// Lazy-load every page so each becomes its own JS chunk.
+// The initial bundle only contains the home page code.
+const HomePage           = lazy(() => import("@/pages/Home"));
+const NotesPage          = lazy(() => import("@/pages/Notes"));
+const NoteDetailPage     = lazy(() => import("@/pages/NoteDetail"));
+const ComposersPage      = lazy(() => import("@/pages/Composers"));
+const ComposerDetailPage = lazy(() => import("@/pages/ComposerDetail"));
+const PiecesPage         = lazy(() => import("@/pages/Pieces"));
+const PieceDetailPage    = lazy(() => import("@/pages/PieceDetail"));
+const BooksPage          = lazy(() => import("@/pages/Books"));
+const BookDetailPage     = lazy(() => import("@/pages/BookDetail"));
+const MasterclassesPage  = lazy(() => import("@/pages/Masterclasses"));
+const MasterclassDetailPage = lazy(() => import("@/pages/MasterclassDetail"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 10, // 10 min — fresh for longer
+      gcTime:    1000 * 60 * 30, // 30 min — keep in memory after inactive
     }
   }
 });
 
-function Router() {
+// While the user reads the home page, silently load all list data in the
+// background so every tab opens instantly on first click.
+function usePrefetchLists() {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      queryClient.prefetchQuery(getListPiecesQueryOptions());
+      queryClient.prefetchQuery(getListComposersQueryOptions());
+      queryClient.prefetchQuery(getListNotesQueryOptions());
+      queryClient.prefetchQuery(getListBooksQueryOptions());
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+}
+
+function PageLoader() {
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+    </div>
+  );
+}
 
-      <Route path="/pieces" component={PiecesPage} />
-      <Route path="/pieces/:id" component={PieceDetailPage} />
+function Router() {
+  usePrefetchLists();
 
-      <Route path="/composers" component={ComposersPage} />
-      <Route path="/composers/:id" component={ComposerDetailPage} />
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={HomePage} />
 
-      <Route path="/books" component={BooksPage} />
-      <Route path="/books/:id" component={BookDetailPage} />
+        <Route path="/pieces" component={PiecesPage} />
+        <Route path="/pieces/:id" component={PieceDetailPage} />
 
-      <Route path="/masterclasses" component={MasterclassesPage} />
-      <Route path="/masterclasses/:id" component={NoteDetailPage} />
+        <Route path="/composers" component={ComposersPage} />
+        <Route path="/composers/:id" component={ComposerDetailPage} />
 
-      <Route path="/notes" component={NotesPage} />
-      <Route path="/notes/:id" component={NoteDetailPage} />
+        <Route path="/books" component={BooksPage} />
+        <Route path="/books/:id" component={BookDetailPage} />
 
-      <Route>
-        <div className="text-center py-32 font-serif text-2xl italic text-muted-foreground">
-          Page not found in manuscript.
-        </div>
-      </Route>
-    </Switch>
+        <Route path="/masterclasses" component={MasterclassesPage} />
+        <Route path="/masterclasses/:id" component={MasterclassDetailPage} />
+
+        <Route path="/notes" component={NotesPage} />
+        <Route path="/notes/:id" component={NoteDetailPage} />
+
+        <Route>
+          <div className="text-center py-32 font-serif text-2xl italic text-muted-foreground">
+            Page not found in manuscript.
+          </div>
+        </Route>
+      </Switch>
+    </Suspense>
   );
 }
 
