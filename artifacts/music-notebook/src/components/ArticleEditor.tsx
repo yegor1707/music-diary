@@ -12,8 +12,8 @@ export type Block =
   | { id: string; type: "text"; content: string }
   | { id: string; type: "heading"; content: string }
   | { id: string; type: "subheading"; content: string }
-  | { id: string; type: "image"; url: string; caption: string; size?: ImageSize }
-  | { id: string; type: "score"; url: string; caption: string; size?: ImageSize }
+  | { id: string; type: "image"; url: string; caption: string; size?: ImageSize; float?: "left" | "right" }
+  | { id: string; type: "score"; url: string; caption: string; size?: ImageSize; float?: "left" | "right" }
   | { id: string; type: "pdf"; url: string; title: string }
   | { id: string; type: "quote"; content: string }
   | { id: string; type: "timestamp"; time: string; label: string }
@@ -182,7 +182,7 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
           {block.url && (
             <img src={block.url} alt="" className="max-h-48 w-auto rounded-sm border border-border/30 object-contain" />
           )}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Size:</label>
               <select
@@ -195,12 +195,25 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                 ))}
               </select>
             </div>
+            {(block.size || "full") !== "full" && (
+              <div className="flex items-center gap-2">
+                <label className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Side:</label>
+                <select
+                  value={block.float || "left"}
+                  onChange={e => onChange({ ...block, float: e.target.value as "left" | "right" })}
+                  className="bg-card border border-border/40 text-foreground font-sans text-xs px-2 py-1 rounded-sm focus:outline-none focus:border-primary"
+                >
+                  <option value="left">Left (text wraps right)</option>
+                  <option value="right">Right (text wraps left)</option>
+                </select>
+              </div>
+            )}
             <input
               type="text"
               value={block.caption}
               onChange={e => onChange({ ...block, caption: e.target.value })}
               placeholder="Caption (optional)..."
-              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40 min-w-[120px]"
             />
           </div>
         </div>

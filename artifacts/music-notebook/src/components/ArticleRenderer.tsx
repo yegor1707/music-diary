@@ -2,53 +2,72 @@ import { parseBlocks, type Block, type ImageSize } from "./ArticleEditor";
 import { FileText, Music2, Clock, Youtube } from "lucide-react";
 import { extractYouTubeId } from "@/lib/utils";
 
-const SIZE_CLASSES: Record<ImageSize, string> = {
-  small: "w-1/4",
-  medium: "w-1/2",
-  large: "w-3/4",
-  full: "w-full",
+const SIZE_WIDTHS: Record<Exclude<ImageSize, "full">, string> = {
+  small: "25%",
+  medium: "50%",
+  large: "75%",
 };
 
 function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick?: (time: string) => void }) {
   switch (block.type) {
     case "heading":
       return (
-        <h2 className="font-serif font-bold text-3xl text-foreground mt-10 mb-4 leading-tight">
+        <h2 className="font-serif font-bold text-3xl text-foreground mt-10 mb-4 leading-tight clear-both">
           {block.content}
         </h2>
       );
     case "subheading":
       return (
-        <h3 className="font-serif font-semibold text-xl text-foreground mt-8 mb-3">
+        <h3 className="font-serif font-semibold text-xl text-foreground mt-8 mb-3 clear-both">
           {block.content}
         </h3>
       );
     case "text":
       return (
-        <p className="font-serif text-foreground/90 text-lg leading-[1.85] mb-0">
+        <p className="font-serif text-foreground/90 text-lg leading-[1.85]">
           {block.content}
         </p>
       );
     case "quote":
       return (
-        <blockquote className="my-8 pl-6 border-l-4 border-primary/30">
+        <blockquote className="my-8 pl-6 border-l-4 border-primary/30 clear-both">
           <p className="font-serif italic text-xl text-foreground/80 leading-relaxed">
             {block.content}
           </p>
         </blockquote>
       );
     case "image": {
-      const sizeClass = SIZE_CLASSES[block.size || "full"];
-      return (
-        <figure className="my-8">
-          {block.url && (
-            <div className={`${sizeClass}`}>
+      const size = block.size || "full";
+      if (size !== "full") {
+        const width = SIZE_WIDTHS[size];
+        const isRight = block.float === "right";
+        return (
+          <figure
+            style={{ width, float: isRight ? "right" : "left", margin: isRight ? "0.5rem 0 1rem 1.5rem" : "0.5rem 1.5rem 1rem 0" }}
+          >
+            {block.url && (
               <img
                 src={block.url}
                 alt={block.caption || ""}
                 className="w-full h-auto object-contain rounded-sm notebook-border bg-card p-2"
               />
-            </div>
+            )}
+            {block.caption && (
+              <figcaption className="mt-1.5 text-xs font-sans italic text-muted-foreground text-center">
+                {block.caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+      }
+      return (
+        <figure className="my-8 clear-both">
+          {block.url && (
+            <img
+              src={block.url}
+              alt={block.caption || ""}
+              className="w-full h-auto object-contain rounded-sm notebook-border bg-card p-2"
+            />
           )}
           {block.caption && (
             <figcaption className="mt-2 text-sm font-sans italic text-muted-foreground">
@@ -59,10 +78,37 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
       );
     }
     case "score": {
-      const sizeClass = SIZE_CLASSES[block.size || "full"];
+      const size = block.size || "full";
+      if (size !== "full") {
+        const width = SIZE_WIDTHS[size];
+        const isRight = block.float === "right";
+        return (
+          <figure
+            style={{ width, float: isRight ? "right" : "left", margin: isRight ? "0.5rem 0 1rem 1.5rem" : "0.5rem 1.5rem 1rem 0" }}
+          >
+            <div className="relative">
+              {block.url && (
+                <img
+                  src={block.url}
+                  alt={block.caption || "Score fragment"}
+                  className="w-full h-auto object-contain rounded-sm notebook-border bg-white p-4"
+                />
+              )}
+              <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded-sm flex items-center gap-1 text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">
+                <Music2 className="w-2.5 h-2.5" /> Score
+              </div>
+            </div>
+            {block.caption && (
+              <figcaption className="mt-1.5 text-xs font-sans italic text-muted-foreground text-center">
+                {block.caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+      }
       return (
-        <figure className="my-8">
-          <div className={`relative ${sizeClass}`}>
+        <figure className="my-8 clear-both">
+          <div className="relative">
             {block.url && (
               <img
                 src={block.url}
@@ -84,7 +130,7 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
     }
     case "pdf":
       return (
-        <div className="my-6">
+        <div className="my-6 clear-both">
           <a
             href={block.url}
             target="_blank"
@@ -135,7 +181,7 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
       const ytId = extractYouTubeId(block.url);
       if (!ytId && !block.url) return null;
       return (
-        <figure className="my-8">
+        <figure className="my-8 clear-both">
           {ytId ? (
             <div className="rounded-sm overflow-hidden notebook-border bg-black shadow-md aspect-video w-full">
               <iframe
@@ -162,10 +208,12 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
       );
     }
     case "image-text": {
-      const imgWidthClass = SIZE_CLASSES[block.size || "medium"];
+      const imgWidthClass =
+        block.size === "small" ? "w-1/4" :
+        block.size === "large" ? "w-3/4" : "w-1/2";
       const isLeft = block.imagePosition !== "right";
       return (
-        <figure className={`my-8 flex gap-6 items-start ${isLeft ? "flex-row" : "flex-row-reverse"}`}>
+        <figure className={`my-8 flex gap-6 items-start clear-both ${isLeft ? "flex-row" : "flex-row-reverse"}`}>
           {block.imageUrl && (
             <div className={`flex-shrink-0 ${imgWidthClass}`}>
               <img
@@ -209,10 +257,13 @@ export function ArticleRenderer({
   }
 
   return (
-    <div className="space-y-5">
-      {blocks.map(block => (
-        <BlockView key={block.id} block={block} onTimestampClick={onTimestampClick} />
+    <div style={{ overflow: "auto" }}>
+      {blocks.map((block, i) => (
+        <div key={block.id} style={{ marginTop: i > 0 ? "1.25rem" : 0 }}>
+          <BlockView block={block} onTimestampClick={onTimestampClick} />
+        </div>
       ))}
+      <div style={{ clear: "both" }} />
     </div>
   );
 }
