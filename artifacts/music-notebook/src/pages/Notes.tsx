@@ -11,7 +11,7 @@ import type { Note } from "@workspace/api-client-react";
 function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+      className="fixed inset-0 z-30 bg-black/85 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div className="relative max-w-5xl w-full" onClick={e => e.stopPropagation()}>
