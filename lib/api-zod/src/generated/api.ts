@@ -11,11 +11,11 @@ import * as zod from "zod";
  * @summary Get a random AI-generated musical inspiration
  */
 export const GetMusicalInspirationResponse = zod.object({
-  type: zod.enum(["quote", "fact", "recommendation"]),
+  type: zod.enum(["quote", "fact", "tip", "recording", "masterclass", "theory", "inspiration", "history", "practice", "misc"]),
   content: zod.string(),
   author: zod.string().nullish(),
   workTitle: zod.string().nullish(),
-  youtubeId: zod.string().nullish(),
+  musicSearchQuery: zod.string().nullish(),
 });
 
 /**

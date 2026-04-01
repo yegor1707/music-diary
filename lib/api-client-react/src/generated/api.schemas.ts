@@ -119,7 +119,14 @@ export type MusicalInspirationType =
 export const MusicalInspirationType = {
   quote: "quote",
   fact: "fact",
-  recommendation: "recommendation",
+  tip: "tip",
+  recording: "recording",
+  masterclass: "masterclass",
+  theory: "theory",
+  inspiration: "inspiration",
+  history: "history",
+  practice: "practice",
+  misc: "misc",
 } as const;
 
 export interface MusicalInspiration {
@@ -127,7 +134,7 @@ export interface MusicalInspiration {
   content: string;
   author?: string | null;
   workTitle?: string | null;
-  youtubeId?: string | null;
+  musicSearchQuery?: string | null;
 }
 
 export interface RequestUploadUrlBody {

@@ -715,7 +715,7 @@ components:
       properties:
         type:
           type: string
-          enum: [quote, fact, recommendation]
+          enum: [quote, fact, tip, recording, masterclass, theory, inspiration, history, practice, misc]
         content:
           type: string
         author:
@@ -724,7 +724,7 @@ components:
         workTitle:
           type: string
           nullable: true
-        youtubeId:
+        musicSearchQuery:
           type: string
           nullable: true
       required: [type, content]
