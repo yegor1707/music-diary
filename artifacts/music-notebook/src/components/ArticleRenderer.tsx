@@ -161,6 +161,33 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
         </figure>
       );
     }
+    case "image-text": {
+      const imgWidthClass = SIZE_CLASSES[block.size || "medium"];
+      const isLeft = block.imagePosition !== "right";
+      return (
+        <figure className={`my-8 flex gap-6 items-start ${isLeft ? "flex-row" : "flex-row-reverse"}`}>
+          {block.imageUrl && (
+            <div className={`flex-shrink-0 ${imgWidthClass}`}>
+              <img
+                src={block.imageUrl}
+                alt={block.caption || ""}
+                className="w-full h-auto object-contain rounded-sm notebook-border bg-card p-2"
+              />
+              {block.caption && (
+                <figcaption className="mt-1.5 text-xs font-sans italic text-muted-foreground text-center">
+                  {block.caption}
+                </figcaption>
+              )}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-serif text-foreground/90 text-lg leading-[1.85] whitespace-pre-wrap">
+              {block.text}
+            </p>
+          </div>
+        </figure>
+      );
+    }
   }
 }
 

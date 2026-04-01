@@ -4,7 +4,7 @@ import { useListPieces } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Modal } from "@/components/ui/modal";
 import { PieceForm } from "@/components/Forms";
-import { Plus, PlayCircle, ArrowRight, Search, ChevronDown } from "lucide-react";
+import { Plus, PlayCircle, Search, ChevronDown } from "lucide-react";
 
 export default function PiecesPage() {
   const { data: pieces, isLoading } = useListPieces();
@@ -40,7 +40,6 @@ export default function PiecesPage() {
 
   return (
     <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-      {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif italic text-3xl text-foreground">Music & Analysis</h2>
         {isEditing && (
@@ -50,7 +49,6 @@ export default function PiecesPage() {
         )}
       </div>
 
-      {/* Search & Filter bar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-10 p-4 bg-card notebook-border">
         <div className="flex-1 flex items-center gap-2">
           <Search className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
@@ -86,35 +84,34 @@ export default function PiecesPage() {
           {search || composerFilter !== "all" ? "No pieces match your search." : "No pieces logged yet."}
         </div>
       ) : (
-        <div className="space-y-12">
+        <div className="space-y-10">
           {sortedComposers.map(composer => (
             <section key={composer}>
-              <h3 className="font-serif font-bold text-2xl text-foreground border-b-2 border-border pb-2 mb-6 inline-block pr-8">{composer}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="font-serif font-bold text-xl text-foreground border-b border-border pb-2 mb-0">{composer}</h3>
+              <div className="divide-y divide-border/50">
                 {grouped[composer].map(piece => (
-                  <div key={piece.id} className="flex flex-col h-full p-5 bg-card notebook-border hover:border-primary/30 hover:shadow-md transition-all">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-serif font-bold text-xl text-foreground leading-tight">{piece.title}</h4>
-                      {piece.youtubeUrl && <PlayCircle className="w-5 h-5 text-primary/40 flex-shrink-0 ml-2" />}
+                  <Link key={piece.id} href={`/pieces/${piece.id}`}>
+                    <div className="flex items-center gap-4 py-3 px-1 hover:bg-primary/3 transition-colors cursor-pointer group">
+                      <span className="font-serif text-base text-foreground group-hover:text-primary transition-colors flex-1 leading-snug">
+                        {piece.title}
+                      </span>
+                      {piece.tags && piece.tags.length > 0 && (
+                        <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                          {piece.tags.slice(0, 3).map(t => (
+                            <span key={t} className="px-2 py-0.5 bg-primary/8 border border-primary/20 text-[0.55rem] font-sans uppercase tracking-widest text-primary/70 rounded-sm">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {piece.youtubeUrl && (
+                        <PlayCircle className="w-4 h-4 text-primary/30 flex-shrink-0 group-hover:text-primary/60 transition-colors" />
+                      )}
+                      <span className="font-sans text-[0.65rem] tracking-widest text-muted-foreground uppercase flex-shrink-0 w-12 text-right">
+                        {piece.year || ""}
+                      </span>
                     </div>
-                    {piece.tags && piece.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
-                        {piece.tags.map(t => (
-                          <span key={t} className="px-2.5 py-0.5 bg-primary/8 border border-primary/20 text-[0.6rem] font-sans uppercase tracking-widest text-primary/80 rounded-sm">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-auto flex items-center justify-between border-t border-border/30 pt-3">
-                      <span className="font-sans text-[0.65rem] tracking-widest text-muted-foreground uppercase">{piece.year || "—"}</span>
-                      <Link href={`/pieces/${piece.id}`}>
-                        <span className="flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-widest text-primary hover:opacity-70 transition-opacity">
-                          Analyze <ArrowRight className="w-3.5 h-3.5" />
-                        </span>
-                      </Link>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </section>

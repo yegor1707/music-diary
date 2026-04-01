@@ -103,9 +103,6 @@ export default function ComposerDetailPage() {
         </div>
 
         <div className="flex-1 pt-2 md:pt-12">
-          <div className="text-[0.65rem] font-sans font-semibold uppercase tracking-[0.25em] text-primary mb-4">
-            {composer.nationality || "Composer"}
-          </div>
           <h1 className="font-serif font-bold text-4xl md:text-5xl text-foreground leading-tight mb-4">
             {composer.name}
           </h1>

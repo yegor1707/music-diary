@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { useUploadImage } from "@workspace/api-client-react";
 import { 
   Plus, Trash2, Image as ImageIcon, FileText, Quote, Type, 
-  Heading2, Music2, ChevronUp, ChevronDown, Loader2, Clock, Youtube
+  Heading2, Music2, ChevronUp, ChevronDown, Loader2, Clock, Youtube,
+  LayoutTemplate
 } from "lucide-react";
 
 export type ImageSize = "small" | "medium" | "large" | "full";
@@ -16,7 +17,8 @@ export type Block =
   | { id: string; type: "pdf"; url: string; title: string }
   | { id: string; type: "quote"; content: string }
   | { id: string; type: "timestamp"; time: string; label: string }
-  | { id: string; type: "video"; url: string; caption: string };
+  | { id: string; type: "video"; url: string; caption: string }
+  | { id: string; type: "image-text"; imageUrl: string; caption: string; text: string; imagePosition: "left" | "right"; size: ImageSize };
 
 export type EditorMode = "piece" | "content" | "notes";
 
@@ -51,6 +53,7 @@ const BLOCK_LABELS: Record<Block["type"], string> = {
   quote: "Musical Quote",
   timestamp: "Timestamp",
   video: "Video",
+  "image-text": "Image + Text",
 };
 
 const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
@@ -63,13 +66,14 @@ const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
   quote: <Quote className="w-3.5 h-3.5" />,
   timestamp: <Clock className="w-3.5 h-3.5" />,
   video: <Youtube className="w-3.5 h-3.5" />,
+  "image-text": <LayoutTemplate className="w-3.5 h-3.5" />,
 };
 
 function getBlockTypes(mode: EditorMode): Block["type"][] {
-  const base: Block["type"][] = ["text", "heading", "subheading", "image", "score", "pdf", "quote"];
+  const base: Block["type"][] = ["text", "heading", "subheading", "image", "image-text", "score", "pdf", "quote"];
   if (mode === "piece") return [...base, "timestamp"];
   if (mode === "content") return [...base, "video"];
-  if (mode === "notes") return ["text", "heading", "image", "quote"];
+  if (mode === "notes") return ["text", "heading", "image", "image-text", "quote"];
   return base;
 }
 
@@ -101,6 +105,12 @@ const SIZE_OPTIONS: { value: ImageSize; label: string }[] = [
   { value: "medium", label: "Medium (50%)" },
   { value: "large", label: "Large (75%)" },
   { value: "full", label: "Full width" },
+];
+
+const IMAGE_TEXT_SIZE_OPTIONS: { value: ImageSize; label: string }[] = [
+  { value: "small", label: "Image 25% / Text 75%" },
+  { value: "medium", label: "Image 50% / Text 50%" },
+  { value: "large", label: "Image 75% / Text 25%" },
 ];
 
 function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast }: {
@@ -196,6 +206,71 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
         </div>
       )}
 
+      {block.type === "image-text" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Layout:</label>
+              <select
+                value={block.size}
+                onChange={e => onChange({ ...block, size: e.target.value as ImageSize })}
+                className="bg-card border border-border/40 text-foreground font-sans text-xs px-2 py-1 rounded-sm focus:outline-none focus:border-primary"
+              >
+                {IMAGE_TEXT_SIZE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Image:</label>
+              <select
+                value={block.imagePosition}
+                onChange={e => onChange({ ...block, imagePosition: e.target.value as "left" | "right" })}
+                className="bg-card border border-border/40 text-foreground font-sans text-xs px-2 py-1 rounded-sm focus:outline-none focus:border-primary"
+              >
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Image</p>
+              <div className="flex items-center gap-2">
+                <FileUploadButton onUpload={url => onChange({ ...block, imageUrl: url })} accept="image/*" />
+                <span className="text-muted-foreground/40 text-xs">or</span>
+              </div>
+              <input
+                type="text"
+                value={block.imageUrl}
+                onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                placeholder="Paste image URL..."
+                className="w-full bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              />
+              {block.imageUrl && (
+                <img src={block.imageUrl} alt="" className="max-h-32 w-auto rounded-sm border border-border/30 object-contain mt-2" />
+              )}
+              <input
+                type="text"
+                value={block.caption}
+                onChange={e => onChange({ ...block, caption: e.target.value })}
+                placeholder="Caption (optional)..."
+                className="w-full bg-transparent border-b border-border/50 pb-1 text-xs text-muted-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-[0.6rem] font-sans uppercase tracking-widest text-muted-foreground">Text</p>
+              <textarea
+                value={block.text}
+                onChange={e => onChange({ ...block, text: e.target.value })}
+                placeholder="Write text beside the image..."
+                className="w-full bg-transparent border border-border/40 p-3 rounded-sm text-foreground font-serif text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors min-h-[120px] resize-y"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {block.type === "pdf" && (
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -280,6 +355,7 @@ function createBlock(type: Block["type"]): Block {
     case "quote": return { id, type: "quote", content: "" };
     case "timestamp": return { id, type: "timestamp", time: "", label: "" };
     case "video": return { id, type: "video", url: "", caption: "" };
+    case "image-text": return { id, type: "image-text", imageUrl: "", caption: "", text: "", imagePosition: "left", size: "medium" };
   }
 }
 
