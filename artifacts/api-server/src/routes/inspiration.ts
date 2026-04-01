@@ -9,16 +9,8 @@ const openai = new OpenAI({
 });
 
 type InspirationCategory =
-  | "fact"
-  | "quote"
-  | "tip"
-  | "recording"
-  | "masterclass"
-  | "theory"
-  | "inspiration"
-  | "history"
-  | "practice"
-  | "misc";
+  | "fact" | "quote" | "tip" | "recording" | "masterclass"
+  | "theory" | "inspiration" | "history" | "practice" | "misc";
 
 type InspirationItem = {
   type: InspirationCategory;
@@ -28,32 +20,7 @@ type InspirationItem = {
   musicSearchQuery: string | null;
 };
 
-// ─── Seed fallbacks (English, all unique) ───────────────────────────────────
-
-const SEED_INSPIRATIONS: InspirationItem[] = [
-  { type: "fact", content: "A modern concert grand piano has approximately 230 strings with a combined tension of around 20 tons — which is why the frame is cast from a single piece of iron. The bass strings are wound with copper wire to add mass without excessive length.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "quote", content: "To play a wrong note is insignificant; to play without passion is inexcusable.", author: "Ludwig van Beethoven", workTitle: null, musicSearchQuery: null },
-  { type: "tip", content: "When practising octaves, relax the wrist and let the arm move as one unit from the elbow. Imagine the forearm and hand form a single rigid lever — tension in the wrist kills speed and risks injury. Keep weight in the arm, not the fingers.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "recording", content: "Glenn Gould recorded Bach's Goldberg Variations twice: in 1955 as a debut that made him world-famous overnight, and in 1981, just months before his death. The second recording is far slower and deeply introspective — Gould himself described it as 'a very, very lonely experience.'", author: "Johann Sebastian Bach", workTitle: "Goldberg Variations, BWV 988", musicSearchQuery: "Bach Goldberg Variations Glenn Gould 1981" },
-  { type: "masterclass", content: "Finger independence drill: hold A and D (fingers 3 and 4) depressed on the keys while trilling C and E (fingers 1 and 2). Then swap — hold 1 and 2 while trilling 3 and 4. Do this for two minutes daily; it targets the weakest link in most pianists' technique.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "theory", content: "The 'Tristan chord' — F, B, D♯, A♯ — opens Wagner's Tristan und Isolde (1859) and famously never resolves to the tonic throughout the entire four-hour opera. It is considered the single chord that initiated the dissolution of classical tonality.", author: "Richard Wagner", workTitle: "Tristan und Isolde, Prelude", musicSearchQuery: "Wagner Tristan und Isolde Prelude Furtwangler" },
-  { type: "inspiration", content: "Try composing a short piece using only the notes of the F♯ major pentatonic scale: F♯, G♯, A♯, C♯, D♯. The pentatonic has no half-steps and no 'wrong' notes — it creates natural space and ambiguity. Aim for asymmetric phrases of 3 and 5 bars rather than the usual 4.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "history", content: "On 29 May 1913, the premiere of Stravinsky's The Rite of Spring in Paris erupted into a riot. Audience members shouted and fought while the dancers could barely hear the orchestra. One year later the same Parisian public gave it a standing ovation.", author: "Igor Stravinsky", workTitle: "The Rite of Spring", musicSearchQuery: "Stravinsky Rite of Spring Gergiev Mariinsky" },
-  { type: "practice", content: "Slow practice drill: take the passage causing you trouble and play it at exactly one quarter of the target tempo, with full attention to each individual finger movement. This is not tedious slowness — it is precise motor programming. Speed comes later, automatically.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "misc", content: "Claude Debussy failed several conservatoire examinations and was regularly told he ignored all the rules. His professors called him 'dangerous.' That refusal to obey academic harmony is exactly what made him the father of musical Impressionism.", author: "Claude Debussy", workTitle: null, musicSearchQuery: null },
-  { type: "fact", content: "Bartolomeo Cristofori invented the piano around 1700 in Florence, calling it 'gravicembalo col piano e forte' — a harpsichord with soft and loud. Unlike the harpsichord, the piano's hammer mechanism means the volume responds to the player's touch: the first genuinely expressive keyboard instrument.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "quote", content: "To play a piece correctly you must understand it to the very marrow — not only the notes but everything between them.", author: "Sviatoslav Richter", workTitle: null, musicSearchQuery: null },
-  { type: "tip", content: "For a singing tone in a cantabile passage, think of pulling the sound out of the key rather than pressing down. Sink the fingertip deeply into the key surface as if you want to lift it from underneath with a bowing motion.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "recording", content: "Miles Davis recorded Kind of Blue in just two sessions in 1959. Most of the musicians played from Davis's sketches with almost no rehearsal. He deliberately gave them minimal instructions to preserve the freshness of the first take. It remains the best-selling jazz album in history.", author: "Miles Davis", workTitle: "Kind of Blue", musicSearchQuery: "Miles Davis Kind of Blue full album" },
-  { type: "theory", content: "The Neapolitan chord is a major chord built on the flattened second degree of a scale. In C minor, that is D♭ major. It adds a distinctive bitter, tragic colour to climaxes and was a favourite of Chopin, Schubert, and Liszt. Its voice-leading into the dominant is exceptionally smooth.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "inspiration", content: "Compose something in A♭ Lydian — the raised fourth gives the mode a floating, luminous quality. Try a slow, wide-spanning left-hand accompaniment with a lyrical, ornamented melody above it, in the spirit of Ravel's slow movements.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "history", content: "On 22 December 1808 in Vienna, Beethoven held a four-hour concert at which he premiered his Fifth Symphony, Sixth Symphony, Fourth Piano Concerto, and the Choral Fantasy all in one evening — all performed by an underprepared orchestra in a freezing, half-empty hall.", author: "Ludwig van Beethoven", workTitle: "Symphony No. 5, Op. 67", musicSearchQuery: "Beethoven Symphony 5 Carlos Kleiber Vienna Philharmonic" },
-  { type: "practice", content: "Rhythmic dotting exercise: take any even passage and play it in dotted rhythm — long-short, long-short. Then reverse to short-long. This exposes weak fingers that hide in even rhythm and builds the precision needed for fast runs.", author: null, workTitle: null, musicSearchQuery: null },
-  { type: "masterclass", content: "The 'pedal staccato' effect: depress the sustain pedal, play a staccato note, then release the key while keeping the pedal down. The tone continues but retains the attack character of the staccato. Chopin used this in his Nocturnes to achieve notes that seem to float in mid-air.", author: "Frédéric Chopin", workTitle: null, musicSearchQuery: null },
-  { type: "misc", content: "The Stradivarius violin maintains acoustic properties unmatched by modern instruments after 300 years. Scientists debate the cause: some point to minerals in the wood absorbed from Alpine groundwater, others to the unique varnish formula. No modern copy has fully replicated the sound.", author: null, workTitle: null, musicSearchQuery: null },
-];
-
-// ─── Shuffle utility ─────────────────────────────────────────────────────────
+// ─── Shuffle ──────────────────────────────────────────────────────────────────
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -64,186 +31,524 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// ─── Fallback deck (cycled through without repeating until exhausted) ─────────
-
-let fallbackDeck: InspirationItem[] = shuffle(SEED_INSPIRATIONS);
-let fallbackIndex = 0;
-
-function nextFallback(excludeCategories: InspirationCategory[]): InspirationItem {
-  const remaining = fallbackDeck.slice(fallbackIndex);
-  const preferred = remaining.filter(i => !excludeCategories.includes(i.type));
-  if (preferred.length > 0) {
-    return preferred[Math.floor(Math.random() * preferred.length)];
-  }
-  if (fallbackIndex >= fallbackDeck.length) {
-    fallbackDeck = shuffle(SEED_INSPIRATIONS);
-    fallbackIndex = 0;
-  }
-  return fallbackDeck[fallbackIndex++];
-}
-
-// ─── Deduplication state ──────────────────────────────────────────────────────
-
-// Track served content hashes — never repeat the same content
-const servedContentHashes = new Set<string>();
-// Track served workTitles — never repeat the same piece
-const servedWorkTitles = new Set<string>();
-// Track served authors — limit same author appearances
-const authorAppearanceCount = new Map<string, number>();
-const MAX_AUTHOR_APPEARANCES = 2;
-
-// Category rotation — avoid repeating same category in last N requests
-const recentCategories: InspirationCategory[] = [];
-const RECENT_CAT_WINDOW = 5;
-
-function contentHash(s: string): string {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  }
-  return h.toString(36);
-}
-
-function normalizeTitle(t: string): string {
-  return t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 40);
-}
-
-function isItemFresh(item: InspirationItem): boolean {
-  if (servedContentHashes.has(contentHash(item.content))) return false;
-  if (item.workTitle && servedWorkTitles.has(normalizeTitle(item.workTitle))) return false;
-  if (item.author && (authorAppearanceCount.get(item.author) ?? 0) >= MAX_AUTHOR_APPEARANCES) return false;
-  return true;
-}
-
-function trackServed(item: InspirationItem) {
-  servedContentHashes.add(contentHash(item.content));
-  if (item.workTitle) servedWorkTitles.add(normalizeTitle(item.workTitle));
-  if (item.author) {
-    authorAppearanceCount.set(item.author, (authorAppearanceCount.get(item.author) ?? 0) + 1);
-  }
-  recentCategories.push(item.type);
-  if (recentCategories.length > RECENT_CAT_WINDOW) recentCategories.shift();
-}
-
 // ─── Topic definitions ────────────────────────────────────────────────────────
-// Theme: PIANO = 75%, ORCHESTRAL = 20%, OTHER = 5%
-// Total weight budget: 100 units
+// Each topic is a SINGLE SPECIFIC SUBJECT — the AI can only produce one
+// meaningful answer per topic. Topics are consumed in shuffled order, so
+// no subject ever repeats until the entire list is exhausted.
+//
+// Distribution: ~75 piano, ~20 orchestral, ~5 other = 100 total
 
 type TopicDef = {
   category: InspirationCategory;
-  weight: number;
-  theme: "piano" | "orchestral" | "other";
-  prompt: string;
+  subject: string;   // unique identifier (used for dedup)
+  prompt: string;    // instruction sent to the AI
 };
 
-// Piano topics target: 75 total weight
-// Orchestral topics target: 20 total weight
-// Other topics target: 5 total weight
+const ALL_TOPICS: TopicDef[] = [
+  // ════════════════════════════════════════════════════════
+  //  PIANO — FACTS (18)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "fact", subject: "piano-strings-tension",
+    prompt: "Write a specific, surprising fact about the internal mechanics of a modern concert grand piano: the exact number of strings, the total string tension (in tons), why the frame must be cast iron, and how bass strings differ from treble strings in construction.",
+  },
+  {
+    category: "fact", subject: "cristofori-invention",
+    prompt: "Write a specific fact about Bartolomeo Cristofori's invention of the piano around 1700 in Florence: what he called it, how his hammer mechanism differed from the harpsichord's plucking mechanism, and why this made expressive playing possible for the first time.",
+  },
+  {
+    category: "fact", subject: "steinway-double-escapement",
+    prompt: "Write a specific fact about Steinway's double-escapement action, when it was perfected, what problem it solved (repetition speed), and why it became the standard for modern concert grands. Include the approximate year Steinway patented this innovation.",
+  },
+  {
+    category: "fact", subject: "bosendorfer-extra-keys",
+    prompt: "Write a specific fact about the Bösendorfer Imperial 97-key piano: why it has nine extra bass keys below the standard 88, which composers wrote music requiring them, and what acoustic effect the resonating extra strings create even when not struck.",
+  },
+  {
+    category: "fact", subject: "gould-stop-performing",
+    prompt: "Write a specific fact about Glenn Gould's decision to stop giving live concerts in 1964 at age 31: what he said about audiences, the recording studio, and his belief that the live concert was an 'outmoded ritual'. Name his last public concert date and location.",
+  },
+  {
+    category: "fact", subject: "horowitz-return-1965",
+    prompt: "Write a specific fact about Vladimir Horowitz's Carnegie Hall comeback recital on May 9, 1965, after a 12-year absence from the stage: the atmosphere in the hall, the sold-out crowd, the program he played, and the emotional impact of the performance.",
+  },
+  {
+    category: "fact", subject: "richter-no-scores",
+    prompt: "Write a specific fact about Sviatoslav Richter's legendary memory — specifically his decision in later life to perform only with a score and a page-turner on stage, and the philosophical reasons he gave for this unusual choice.",
+  },
+  {
+    category: "fact", subject: "argerich-1965-chopin-competition",
+    prompt: "Write a specific fact about Martha Argerich winning the 1965 Chopin International Piano Competition in Warsaw at age 24: the jury's reaction (including Arturo Benedetti Michelangeli who threatened to leave), what she played in the final, and her preparation.",
+  },
+  {
+    category: "fact", subject: "rachmaninoff-concerto2-depression",
+    prompt: "Write a specific fact about how Rachmaninoff composed his Piano Concerto No. 2 in C minor after a period of severe depression following the failed premiere of his First Symphony: his treatment with hypnotherapy by Dr. Nikolai Dahl, the dedication, and the premiere in 1901.",
+  },
+  {
+    category: "fact", subject: "chopin-piano-preference",
+    prompt: "Write a specific fact about Frédéric Chopin's strong preference for Pleyel pianos over Érard and Steinway: why he preferred Pleyel's lighter action and singing tone, what he said about Érard pianos, and how this affected the character of his compositions.",
+  },
+  {
+    category: "fact", subject: "liszt-invented-recital",
+    prompt: "Write a specific fact about Franz Liszt inventing the solo piano recital format in the 1830s–40s: the first time he performed alone on stage without other artists, the audience's astonishment, and how he arranged his chairs differently on stage.",
+  },
+  {
+    category: "fact", subject: "scriabin-color-music",
+    prompt: "Write a specific fact about Alexander Scriabin's synesthesia and his invention of a 'color organ' (tastiera per luce) for his Prometheus: The Poem of Fire (1910): the color-pitch correspondences he used, how the premiere was staged, and whether the device actually worked.",
+  },
+  {
+    category: "fact", subject: "michelangeli-perfectionism",
+    prompt: "Write a specific fact about Arturo Benedetti Michelangeli's extreme perfectionism: his habit of cancelling concerts at the last minute, the number of recordings he authorized during his lifetime, and what made his sound on the piano uniquely recognizable.",
+  },
+  {
+    category: "fact", subject: "sokolov-no-recordings",
+    prompt: "Write a specific fact about Grigory Sokolov's refusal to release studio recordings and his insistence that only live recordings represent real music: the few authorized recordings that exist, his unmatched technique, and why musicians consider him the greatest living pianist.",
+  },
+  {
+    category: "fact", subject: "lipatti-farewell-concert",
+    prompt: "Write a specific fact about Dinu Lipatti's farewell concert at Besançon on September 7, 1950, given while he was dying of leukemia at age 33: the program he played, the moment he could not finish the final piece, and the historical significance of the recording.",
+  },
+  {
+    category: "fact", subject: "pollini-chopin-competition",
+    prompt: "Write a specific fact about Maurizio Pollini winning the 1960 Chopin Competition in Warsaw at age 18: what Arthur Rubinstein said about him after the competition, the pieces he played, and how the jury unanimously awarded him first prize.",
+  },
+  {
+    category: "fact", subject: "sostenuto-pedal",
+    prompt: "Write a specific fact about the sostenuto pedal (the middle pedal on a grand piano): exactly how it works mechanically, which composers specifically exploited it, and a famous musical passage where its effect is essential.",
+  },
+  {
+    category: "fact", subject: "piano-hammer-mechanism",
+    prompt: "Write a specific fact about the escapement mechanism in a grand piano action: why the hammer must fall away from the string immediately after striking it (rather than staying pressed against it), what would happen without this mechanism, and how many moving parts are in a single key action.",
+  },
 
-const TOPICS: TopicDef[] = [
-  // ── PIANO FACTS (12 weight) ──────────────────────────────────────────────
-  { category: "fact", weight: 3, theme: "piano", prompt: "a surprising mechanical fact about the modern concert grand piano — hammers, strings, dampers, the una corda pedal, the sostenuto pedal, or the iron frame. Cite specific numbers or engineering details." },
-  { category: "fact", weight: 3, theme: "piano", prompt: "a fascinating fact about a legendary pianist — choose one not previously common in trivia: Martha Argerich, Dinu Lipatti, Arturo Benedetti Michelangeli, Mikhail Pletnev, or Grigory Sokolov — and one defining recording or performance." },
-  { category: "fact", weight: 3, theme: "piano", prompt: "a surprising fact about a famous piano concerto — its premiere, its composition story, or a legendary performance — by Rachmaninoff, Prokofiev, Bartók, Grieg, or Schumann. Name exact opus numbers and years." },
-  { category: "fact", weight: 3, theme: "piano", prompt: "a little-known fact about the history of piano manufacturing — Steinway, Bösendorfer, Fazioli, or Bechstein — a specific innovation they introduced and when." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — QUOTES (10)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "quote", subject: "chopin-quote-singing",
+    prompt: "Share a specific, vivid quote from Frédéric Chopin about making the piano sing — about the quality of touch, the legato, or his belief that the piano should imitate the human voice. Give the context in which he said it.",
+  },
+  {
+    category: "quote", subject: "liszt-quote-technique",
+    prompt: "Share a specific quote from Franz Liszt about piano technique — about the relationship between virtuosity and expression, or his view that technique should be invisible. Give the source or context.",
+  },
+  {
+    category: "quote", subject: "gould-quote-recording",
+    prompt: "Share a specific, memorable quote from Glenn Gould about the recording studio: why he believed it was superior to live performance, how the microphone changed his relationship with music, or his views on editing and perfection.",
+  },
+  {
+    category: "quote", subject: "horowitz-quote-piano",
+    prompt: "Share a specific quote from Vladimir Horowitz about the piano — its sound, its possibilities, or his personal relationship with the instrument. Avoid the most commonly repeated quotes. Give context.",
+  },
+  {
+    category: "quote", subject: "richter-quote-interpretation",
+    prompt: "Share a specific quote from Sviatoslav Richter about interpretation: his view that a performer must be completely faithful to the score, serve the composer, and suppress their own personality. Give context.",
+  },
+  {
+    category: "quote", subject: "rachmaninoff-quote-memory",
+    prompt: "Share a specific quote from Sergei Rachmaninoff about his own memory, his relationship to his music, or the famous story about hearing a wrong note in a Beethoven symphony and laughing. Give context.",
+  },
+  {
+    category: "quote", subject: "argerich-quote-performance",
+    prompt: "Share a specific quote from Martha Argerich about performing, about fear on stage, about preparation, or about her instinctive approach to music. Give the context in which she said it.",
+  },
+  {
+    category: "quote", subject: "neuhaus-quote-teaching",
+    prompt: "Share a specific quote from Heinrich Neuhaus (the great Russian piano pedagogue) about how to teach piano or how to approach a musical phrase. He was the teacher of Richter and Gilels. Give the source.",
+  },
+  {
+    category: "quote", subject: "ravel-quote-piano",
+    prompt: "Share a specific quote from Maurice Ravel about the piano, about orchestral colour on the keyboard, or about his composition process for a specific piano work like Gaspard de la nuit or the Valses nobles. Give context.",
+  },
+  {
+    category: "quote", subject: "prokofiev-quote-piano",
+    prompt: "Share a specific quote from Sergei Prokofiev about his own piano style — the 'toccata' element, the percussive approach to the instrument, or his view of Romanticism. Give context.",
+  },
 
-  // ── PIANO QUOTES (10 weight) ─────────────────────────────────────────────
-  { category: "quote", weight: 3, theme: "piano", prompt: "a vivid, specific quote from Frédéric Chopin about piano touch, tone, the singing quality of the instrument, or his own compositional process. Avoid the most commonly repeated Chopin quotes." },
-  { category: "quote", weight: 3, theme: "piano", prompt: "a memorable quote from Franz Liszt, Sergei Rachmaninoff, or Alexander Scriabin about piano performance, the piano's expressive range, or their relationship to the instrument." },
-  { category: "quote", weight: 2, theme: "piano", prompt: "a quote from Glenn Gould, Vladimir Horowitz, or Sviatoslav Richter about interpretation, practice, the recording studio, or what makes a great performance. Avoid the most famous ones." },
-  { category: "quote", weight: 2, theme: "piano", prompt: "a quote from a modern pianist — Murray Perahia, Andras Schiff, Mitsuko Uchida, or Leif Ove Andsnes — about how they approach a specific repertoire or what they look for in a piano." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — TIPS (10)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "tip", subject: "tip-arm-weight",
+    prompt: "Explain the technique of using arm weight rather than finger pressure on the piano: why tension in the forearm kills tone quality, how to transfer arm weight into the key naturally, and a simple exercise to develop this skill.",
+  },
+  {
+    category: "tip", subject: "tip-voicing-chords",
+    prompt: "Explain the technique of voicing a piano chord — how to bring out the top note of a chord while subordinating the inner voices, the physical adjustment needed (different weight on different fingers), and an example from Chopin or Debussy where this matters.",
+  },
+  {
+    category: "tip", subject: "tip-syncopated-pedal",
+    prompt: "Explain syncopated (legato) pedalling on the piano: exactly when to depress and release the pedal relative to the melody, why changing the pedal on the beat creates muddiness, and which repertoire makes this technique essential.",
+  },
+  {
+    category: "tip", subject: "tip-slow-practice",
+    prompt: "Explain the specific method of extremely slow practice: why it works neurologically (motor programming), how slow you should actually go, what to focus attention on at slow tempo, and the danger of mindless slow repetition without focused attention.",
+  },
+  {
+    category: "tip", subject: "tip-trill-technique",
+    prompt: "Explain how to develop a fast, even trill on the piano: the correct hand position, which finger combinations work best, why the wrist must be relaxed, and a graduated exercise to build trill speed over several weeks.",
+  },
+  {
+    category: "tip", subject: "tip-octave-playing",
+    prompt: "Explain the technique for playing fast octaves on the piano: the role of forearm rotation (supination/pronation), why the wrist must stay flexible rather than rigid, and what Liszt and Brahms demand in terms of octave technique. Include a warm-up approach.",
+  },
+  {
+    category: "tip", subject: "tip-memorization",
+    prompt: "Explain three different types of piano memory (motor/muscle memory, aural memory, harmonic/structural memory) and why relying on muscle memory alone leads to memory slips in performance. Describe how to strengthen each type.",
+  },
+  {
+    category: "tip", subject: "tip-rubato",
+    prompt: "Explain Chopin's concept of rubato: why 'robbing time' means the left hand stays steady while the right hand floats freely, how this differs from rushing and dragging the whole texture, and an example passage in a Chopin nocturne where this applies.",
+  },
+  {
+    category: "tip", subject: "tip-sight-reading",
+    prompt: "Explain a systematic approach to improving piano sight-reading: how far ahead to look (intervals vs. patterns), why you must never stop for a wrong note, how to identify hand position shapes before playing, and a daily practice routine.",
+  },
+  {
+    category: "tip", subject: "tip-legato",
+    prompt: "Explain how to achieve a true legato on the piano — why it is physically difficult (the piano is a percussive instrument), how to overlap key releases, the role of the pedal vs. finger legato, and a Schubert slow movement as a test case.",
+  },
 
-  // ── PIANO TIPS (12 weight) ───────────────────────────────────────────────
-  { category: "tip", weight: 3, theme: "piano", prompt: "a concrete, immediately actionable piano technique tip about touch and weight — arm weight, wrist flexibility, or finger independence. Describe exactly what to do physically." },
-  { category: "tip", weight: 3, theme: "piano", prompt: "a specific pedalling technique for piano — direct pedalling, syncopated pedalling, half-pedal, flutter pedal — explain what it is, when to use it, and give a famous repertoire example." },
-  { category: "tip", weight: 3, theme: "piano", prompt: "a focused piano practice strategy — how to learn a difficult passage, manage memory, handle a weak hand, or prepare for performance. Be specific and practical." },
-  { category: "tip", weight: 3, theme: "piano", prompt: "a tip about voicing and balance on the piano — how to project a melody above the accompaniment, how to voice a chord, or how to achieve a legato line across different registers." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — RECORDING STORIES (8)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "recording", subject: "gould-goldberg-1955",
+    prompt: "Describe the story of Glenn Gould's 1955 recording of the Goldberg Variations: his age (22), the Columbia Records session in New York, the humming audible in the background, the unconventional fast tempos, and how it made him famous overnight.",
+  },
+  {
+    category: "recording", subject: "gould-goldberg-1981",
+    prompt: "Describe Glenn Gould's 1981 recording of the Goldberg Variations, made just weeks before his death at 50: how he described it as 'a very, very lonely' work, the radical difference in tempo from 1955, and why it is considered one of the most profound piano recordings ever made.",
+  },
+  {
+    category: "recording", subject: "horowitz-carnegie-1965-recording",
+    prompt: "Describe the recording of Vladimir Horowitz's 1965 Carnegie Hall return concert: why CBS recorded it live, what pieces he played (include specific works), the visible emotion in the hall, and how this record became one of the best-selling classical albums of its era.",
+  },
+  {
+    category: "recording", subject: "argerich-chopin-etudes",
+    prompt: "Describe Martha Argerich's legendary 1975 Deutsche Grammophon recording of Chopin Etudes and the Scherzi: why it is still considered the definitive reference, the extraordinary speed of her octave passages, and one specific etude where her interpretation is unmatchable.",
+  },
+  {
+    category: "recording", subject: "richter-carnegie-1960",
+    prompt: "Describe Sviatoslav Richter's 1960 Carnegie Hall debut recording (released by Deutsche Grammophon): why it was considered miraculous, what pieces he played, the audience's reaction, and the specific qualities of his sound that astonished American audiences.",
+  },
+  {
+    category: "recording", subject: "lipatti-besancon-1950",
+    prompt: "Describe the recording of Dinu Lipatti's final concert at Besançon in 1950 while dying of leukemia: the program he played, the moment in the Chopin waltzes when he ran out of strength, and why this recording is considered one of the most moving documents in piano history.",
+  },
+  {
+    category: "recording", subject: "michelangeli-ravel",
+    prompt: "Describe Arturo Benedetti Michelangeli's landmark 1957 recording of Ravel's Gaspard de la nuit and Sonatine: why many consider it the definitive Ravel recording, the crystalline clarity of his touch, and his approach to the extreme demands of 'Scarbo'.",
+  },
+  {
+    category: "recording", subject: "pletnev-tchaikovsky",
+    prompt: "Describe Mikhail Pletnev's groundbreaking transcriptions of Tchaikovsky's Nutcracker Suite for solo piano: when he made them, how he arranged the orchestral textures for ten fingers, and why pianists and critics were astonished by the completeness of his piano writing.",
+  },
 
-  // ── PIANO RECORDING STORIES (10 weight) ─────────────────────────────────
-  { category: "recording", weight: 3, theme: "piano", prompt: "a compelling story about a legendary piano recording session — Horowitz at Carnegie Hall 1965, Gould's 1955 debut, Richter's 1958 Sofia recital, or Argerich's 1965 Chopin competition. Describe what made it historic." },
-  { category: "recording", weight: 3, theme: "piano", prompt: "a story about how a famous solo piano work was recorded under extraordinary circumstances — illness, time pressure, technical accidents, or emotional extremity. Be specific about the piece and the musician." },
-  { category: "recording", weight: 2, theme: "piano", prompt: "a story about an unexpected mistake or improvisation in a piano recording that was left in the final take and became famous — name the work, performer, and what happened." },
-  { category: "recording", weight: 2, theme: "piano", prompt: "a behind-the-scenes story about the recording of a famous piano concerto — the conductor, the soloist, the orchestra, and what made that particular interpretation a landmark. Be very specific." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — MASTERCLASS (7)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "masterclass", subject: "masterclass-double-thirds",
+    prompt: "Write a short masterclass on playing double thirds on the piano (2 paragraphs): why they are difficult (simultaneous independent finger movement), the specific hand position and finger curve needed, and a Chopin Etude Op.25 No.6 approach.",
+  },
+  {
+    category: "masterclass", subject: "masterclass-fast-repeated-notes",
+    prompt: "Write a short masterclass on fast repeated notes on the piano (2 paragraphs): the technique of changing fingers on the same key, the role of wrist rotation, and how Liszt and Prokofiev use this effect. Include a specific exercise.",
+  },
+  {
+    category: "masterclass", subject: "masterclass-brahms-thick-chords",
+    prompt: "Write a short masterclass on playing Brahms's thick chord textures without tension (2 paragraphs): why Brahms demands arm weight from the shoulder, how to distribute weight across the fingers in a six-note chord, and a passage from the Brahms Second Concerto as example.",
+  },
+  {
+    category: "masterclass", subject: "masterclass-chopin-nocturne-line",
+    prompt: "Write a short masterclass on how to play a Chopin Nocturne melody (2 paragraphs): the singing quality, how to create the illusion of crescendo on a single sustained note, where the rubato comes from, and the specific left-hand role in keeping time.",
+  },
+  {
+    category: "masterclass", subject: "masterclass-hand-crossings",
+    prompt: "Write a short masterclass on hand crossings in piano music (2 paragraphs): the physical mechanics of crossing the right hand over the left (or vice versa), common mistakes (tangling, tension), and Scarlatti or Chopin Fantasie-Impromptu as a model.",
+  },
+  {
+    category: "masterclass", subject: "masterclass-debussy-pedal",
+    prompt: "Write a short masterclass on pedalling Debussy (2 paragraphs): why standard pedalling makes Debussy muddy, how to use half-pedal and flutter pedal, and a specific passage from Clair de lune or La cathédrale engloutie where careful pedalling is essential.",
+  },
+  {
+    category: "masterclass", subject: "masterclass-scale-evenness",
+    prompt: "Write a short masterclass on achieving even, fast scales on the piano (2 paragraphs): why the 4th finger is the weak link, how to practise hands separately with varying rhythms and accents, and the correct thumb-under technique without interrupting the line.",
+  },
 
-  // ── PIANO MASTERCLASS (8 weight) ─────────────────────────────────────────
-  { category: "masterclass", weight: 3, theme: "piano", prompt: "a short piano masterclass (2 paragraphs): identify a specific technical challenge (trills, double thirds, fast repeated notes, hand crossing), diagnose what causes it, and give one precise exercise to fix it." },
-  { category: "masterclass", weight: 3, theme: "piano", prompt: "a mini masterclass on how to practise a specific passage type on piano — an arpeggiated left hand, a Chopin rubato, a Beethoven sforzando, or a Brahms thick chord texture. Describe the approach step by step." },
-  { category: "masterclass", weight: 2, theme: "piano", prompt: "a masterclass insight from a great piano pedagogue — Heinrich Neuhaus, Nadia Boulanger, Josef Hofmann, or Theodor Leschetizky — about a specific aspect of piano playing. Quote their teaching if possible." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — THEORY (7)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "theory", subject: "theory-tristan-chord",
+    prompt: "Explain the Tristan chord from Wagner's Tristan und Isolde (1859): its exact notes (F, B, D♯, A♯), why it is ambiguous (it belongs to multiple keys), how it never resolves in the opera, and why it marks the beginning of the dissolution of classical tonality.",
+  },
+  {
+    category: "theory", subject: "theory-neapolitan-sixth",
+    prompt: "Explain the Neapolitan chord (Neapolitan sixth): what it is (a major chord on the flattened second degree), how it functions in a minor key, its distinctive emotional colour, and a famous piano example by Chopin, Schubert, or Beethoven where it is used powerfully.",
+  },
+  {
+    category: "theory", subject: "theory-whole-tone-scale",
+    prompt: "Explain the whole-tone scale: its construction (all whole steps, no half steps), the dreamlike ambiguity it creates because it has no leading tone, and two famous piano pieces by Debussy where he uses it — describing the specific passage and its effect.",
+  },
+  {
+    category: "theory", subject: "theory-coltrane-changes",
+    prompt: "Explain 'Coltrane changes' — the harmonic substitution system John Coltrane developed for Giant Steps (1960): how he replaced standard ii-V-I progressions with three tonal centres a major third apart, and why this was so revolutionary for jazz piano.",
+  },
+  {
+    category: "theory", subject: "theory-octatonic-scale",
+    prompt: "Explain the octatonic (diminished) scale: its alternating whole-step–half-step pattern, how it creates a sense of symmetry and instability, and how Stravinsky used it in The Rite of Spring and how Bartók used it in his piano music.",
+  },
+  {
+    category: "theory", subject: "theory-lydian-mode",
+    prompt: "Explain the Lydian mode (major scale with raised 4th): its bright, floating, otherworldly character, how it differs emotionally from a regular major scale, and a famous piano piece or film score that uses it memorably. Include a chord built from Lydian harmony.",
+  },
+  {
+    category: "theory", subject: "theory-picardy-third",
+    prompt: "Explain the Picardy third: the technique of ending a piece in a minor key with a major chord on the final tonic, why it was common in Baroque music, what emotional effect it creates, and a famous Bach example where it appears unexpectedly.",
+  },
 
-  // ── PIANO THEORY (8 weight) ──────────────────────────────────────────────
-  { category: "theory", weight: 3, theme: "piano", prompt: "explain a specific harmonic or voice-leading technique that pianists encounter — Neapolitan sixth, augmented sixth chords, enharmonic modulation, or chromatic mediant — with a specific piano repertoire example." },
-  { category: "theory", weight: 3, theme: "piano", prompt: "explain an interesting piano chord voicing or texture — a Ravel open-fifth chord, a Debussy parallel chords technique, a Chopin nocturne left-hand spread, or a Liszt Romantic texture. Describe how it is constructed and why it sounds the way it does." },
-  { category: "theory", weight: 2, theme: "piano", prompt: "describe a scale or mode that features prominently in piano repertoire — Hungarian minor, whole-tone scale, octatonic scale, or Lydian dominant — name a famous piano work that uses it and describe its emotional character." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — INSPIRATION (7)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "inspiration", subject: "inspiration-nocturne-idea",
+    prompt: "Give a specific composition idea for a piano nocturne: the key (choose something unusual, like D♭ major or E minor), the left-hand pattern, the melodic character, a specific harmonic turn to use in the middle section, and a mood or image to aim for.",
+  },
+  {
+    category: "inspiration", subject: "inspiration-prelude-idea",
+    prompt: "Give a specific composition idea for a short piano prelude in the spirit of Chopin or Scriabin: a key, a single defining texture or gesture, a harmonic progression that drives the piece, and a suggested length and emotional arc.",
+  },
+  {
+    category: "inspiration", subject: "inspiration-bwv-style",
+    prompt: "Give a specific composition idea for a two-voice invention in the style of Bach: a subject (describe it melodically), how to invert it for the answer, a key for the episode, and a specific harmonic destination for the climax.",
+  },
+  {
+    category: "inspiration", subject: "inspiration-pentatonic",
+    prompt: "Give a specific composition idea based on a pentatonic scale: choose one (e.g. F♯ major pentatonic), describe a texture for the piano, suggest an unusual rhythm or phrase length to avoid symmetry, and a mood the piece should express.",
+  },
+  {
+    category: "inspiration", subject: "inspiration-chromatic-harmony",
+    prompt: "Give a specific composition idea using chromatic mediant relationships (chords whose roots are a third apart but share no common function): choose a starting key and describe two chromatic mediant moves, and the emotional effect they create.",
+  },
+  {
+    category: "inspiration", subject: "inspiration-jazz-voicings",
+    prompt: "Give a specific composition or improvisation idea using jazz piano voicings: suggest a specific chord (e.g. Cmaj9♯11), how to voice it on the piano with left and right hands, and a four-bar harmonic idea to improvise over.",
+  },
+  {
+    category: "inspiration", subject: "inspiration-modal-piece",
+    prompt: "Give a specific composition idea in a non-major/minor mode: choose a mode (Phrygian, Dorian, or Mixolydian), a root note, a piano texture, a characteristic cadence in that mode, and a suggested emotional character and length.",
+  },
 
-  // ── PIANO INSPIRATION (8 weight) ─────────────────────────────────────────
-  { category: "inspiration", weight: 3, theme: "piano", prompt: "give a vivid composition idea specifically for solo piano — a character, mood, texture, and a harmonic starting point (a specific chord or short progression). Make it feel fresh and genuinely inspiring." },
-  { category: "inspiration", weight: 3, theme: "piano", prompt: "suggest a harmonic progression (4–8 chords) that would make a rich basis for piano improvisation or composition. Name each chord precisely and describe the emotional arc they create." },
-  { category: "inspiration", weight: 2, theme: "piano", prompt: "suggest a specific key, mode, and character for a new piano piece — e.g. 'B♭ Dorian, a slow nocturne-like piece with a chaconne bass' — and explain what makes that combination emotionally interesting." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — HISTORY (4)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "history", subject: "history-chopin-paris-debut",
+    prompt: "Describe Frédéric Chopin's Paris debut concert on February 26, 1832: the venue (Salle Pleyel), who attended (Liszt, Mendelssohn, Kalkbrenner), Chopin's extreme nerves, what he played, and the response of the Parisian musical world.",
+  },
+  {
+    category: "history", subject: "history-beethoven-1808-concert",
+    prompt: "Describe Ludwig van Beethoven's 'Academy' concert on December 22, 1808 in Vienna: the four-hour program (Symphonies 5 and 6, Piano Concerto No. 4, Choral Fantasy), the freezing hall, the unprepared orchestra, and the chaos of the final Choral Fantasy performance.",
+  },
+  {
+    category: "history", subject: "history-liszt-recital-format",
+    prompt: "Describe Franz Liszt's invention of the solo piano recital in the 1840s: the specific moment he first performed alone on stage (without a program of mixed artists), the audience reaction to a single performer filling an entire concert, and his theatrical stage manner.",
+  },
+  {
+    category: "history", subject: "history-brahms-meets-schumann",
+    prompt: "Describe the meeting between 20-year-old Johannes Brahms and Robert Schumann in Düsseldorf in 1853: what Brahms played for Schumann, Schumann's extraordinary review in the Neue Zeitschrift für Musik, and how this moment launched Brahms's career.",
+  },
 
-  // ── PIANO HISTORY (4 weight) ─────────────────────────────────────────────
-  { category: "history", weight: 2, theme: "piano", prompt: "describe a significant premiere or historical concert involving piano — Liszt's recitals that invented the solo recital format, Chopin's Paris debut, Brahms meeting Schumann, or Prokofiev premiering his own concerto. Name the exact date and place." },
-  { category: "history", weight: 2, theme: "piano", prompt: "describe an important moment in the history of the piano as an instrument — its invention by Cristofori, the first iron-framed piano, Steinway's 1875 concert grand, or the introduction of the double escapement action." },
+  // ════════════════════════════════════════════════════════
+  //  PIANO — PRACTICE (4)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "practice", subject: "practice-dotted-rhythms",
+    prompt: "Describe the dotted-rhythm practice technique for piano: play a passage in long-short dotted rhythm, then short-long, then even. Explain exactly why this works (it forces each individual finger to move decisively), and a suitable passage to try it on.",
+  },
+  {
+    category: "practice", subject: "practice-hands-separately",
+    prompt: "Describe a systematic hands-separately practice method for a difficult piano passage: how long to spend on each hand, at what tempo, what to listen for, when it is safe to put hands together, and the specific danger of putting hands together too soon.",
+  },
+  {
+    category: "practice", subject: "practice-mental-practice",
+    prompt: "Describe the method of mental practice (practising without the piano): how to 'play' a piece mentally note by note, why it exposes gaps in knowledge faster than physical practice, which famous pianists used it (e.g. Glenn Gould, Sviatoslav Richter), and how to do it effectively.",
+  },
+  {
+    category: "practice", subject: "practice-metronome-method",
+    prompt: "Describe an effective way to use a metronome to build tempo: starting below target speed, practising at each tempo level until completely comfortable, the increments to use, and why increasing tempo too quickly creates bad habits.",
+  },
 
-  // ── PIANO PRACTICE (3 weight) ────────────────────────────────────────────
-  { category: "practice", weight: 3, theme: "piano", prompt: "describe today's piano practice exercise — a specific finger exercise, scale pattern, chord-transition drill, or sight-reading technique — with step-by-step instructions and what physical skill it develops." },
+  // ════════════════════════════════════════════════════════
+  //  ORCHESTRAL — FACTS (5)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "fact", subject: "kleiber-beethoven5",
+    prompt: "Write a specific fact about Carlos Kleiber's legendary 1975 recording of Beethoven's Fifth Symphony with the Vienna Philharmonic: why it is considered the definitive recording, Kleiber's unusual rehearsal method, and what critics said when it was released.",
+  },
+  {
+    category: "fact", subject: "shostakovich-leningrad-symphony",
+    prompt: "Write a specific fact about the premiere of Shostakovich's Seventh Symphony ('Leningrad') on August 9, 1942, performed inside besieged Leningrad: how the orchestra was assembled from starving musicians, how the score was smuggled out, and the role of the premiere in wartime propaganda.",
+  },
+  {
+    category: "fact", subject: "mahler-eighth-premiere",
+    prompt: "Write a specific fact about the premiere of Mahler's Eighth Symphony in Munich on September 12, 1910: the thousand performers on stage (hence 'Symphony of a Thousand'), the audience reaction, who attended, and Mahler's emotional state.",
+  },
+  {
+    category: "fact", subject: "furtwangler-tristan",
+    prompt: "Write a specific fact about Wilhelm Furtwängler's 1952 recording of Wagner's Tristan und Isolde in Bayreuth: why it is still considered the greatest-ever recording of the opera, his unique way of shaping the long Wagnerian phrases, and the specific cast.",
+  },
+  {
+    category: "fact", subject: "celibidache-no-recordings",
+    prompt: "Write a specific fact about Sergiu Celibidache's famous refusal to make commercial recordings during his lifetime: his philosophical reasons (recordings 'freeze' music that must be live), the few surviving broadcasts, and the speed of his rehearsals compared to other conductors.",
+  },
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ── ORCHESTRAL FACTS (4 weight) ─────────────────────────────────────────
-  { category: "fact", weight: 2, theme: "orchestral", prompt: "a fascinating fact about a legendary conductor — Carlos Kleiber, Claudio Abbado, Herbert von Karajan, or Leonard Bernstein — and a landmark recording or concert that defined their legacy." },
-  { category: "fact", weight: 2, theme: "orchestral", prompt: "a surprising fact about a famous orchestral work's composition or premiere — by Shostakovich, Mahler, Sibelius, Bruckner, or Bartók. Include exact dates, opus numbers, and the original reception." },
+  // ════════════════════════════════════════════════════════
+  //  ORCHESTRAL — QUOTES (4)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "quote", subject: "kleiber-quote",
+    prompt: "Share a specific, memorable quote from Carlos Kleiber about conducting, music, or the orchestra — something that reveals his unusual personality and perfectionism. Give context about when or to whom he said it.",
+  },
+  {
+    category: "quote", subject: "celibidache-quote",
+    prompt: "Share a specific quote from Sergiu Celibidache about music, silence, recordings, or the act of conducting — something that captures his philosophical, almost mystical approach to music. Give context.",
+  },
+  {
+    category: "quote", subject: "bernstein-quote",
+    prompt: "Share a specific, vivid quote from Leonard Bernstein about music's power, about what a conductor does, or about his dual life as composer and conductor. Avoid the most commonly cited Bernstein quotes. Give context.",
+  },
+  {
+    category: "quote", subject: "abbado-quote",
+    prompt: "Share a specific quote from Claudio Abbado about the relationship between a conductor and an orchestra, about listening, or about his belief in collaborative music-making rather than authoritarian control. Give context.",
+  },
 
-  // ── ORCHESTRAL QUOTES (3 weight) ────────────────────────────────────────
-  { category: "quote", weight: 3, theme: "orchestral", prompt: "a powerful quote from a conductor — Carlos Kleiber, Claudio Abbado, Celibidache, or Bernstein — about what it means to conduct, to listen, or to shape an orchestra's sound." },
+  // ════════════════════════════════════════════════════════
+  //  ORCHESTRAL — RECORDING STORIES (4)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "recording", subject: "rite-of-spring-riot",
+    prompt: "Describe the premiere of Stravinsky's The Rite of Spring on May 29, 1913, in Paris: the riot in the audience (shouting, fighting), who was present (Debussy, Saint-Saëns), what triggered the chaos, and how Stravinsky responded. Describe how the same audience received it a year later.",
+  },
+  {
+    category: "recording", subject: "karajan-berlin-beethoven",
+    prompt: "Describe Herbert von Karajan's 1963 complete Beethoven symphony cycle recording with the Berlin Philharmonic: the technical innovations Deutsche Grammophon used, the recording conditions, and why this set was the gold standard for 30 years.",
+  },
+  {
+    category: "recording", subject: "furtwangler-wartime-beethoven9",
+    prompt: "Describe Wilhelm Furtwängler's 1942 Berlin wartime recording of Beethoven's Ninth Symphony: the political context (Hitler's birthday celebrations), the extraordinary emotional intensity of the performance, and the controversy surrounding its use by the Nazi regime.",
+  },
+  {
+    category: "recording", subject: "abbado-mahler9",
+    prompt: "Describe Claudio Abbado's 2010 live recording of Mahler's Ninth Symphony with the Lucerne Festival Orchestra: the context (Abbado's cancer, which he had survived), the extraordinary silence at the end of the last movement, and why audiences and critics called it a spiritual experience.",
+  },
 
-  // ── ORCHESTRAL RECORDING STORIES (3 weight) ─────────────────────────────
-  { category: "recording", weight: 3, theme: "orchestral", prompt: "a compelling story about a famous orchestral recording — Carlos Kleiber's Beethoven 5th with Vienna Philharmonic, Furtwängler's wartime Beethoven 9th, or Celibidache's refusal to record. Describe exactly what happened and why it matters." },
+  // ════════════════════════════════════════════════════════
+  //  ORCHESTRAL — THEORY & TECHNIQUE (4)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "theory", subject: "theory-ravel-orchestration",
+    prompt: "Describe a specific orchestration technique from Ravel — his use of muted strings, sul ponticello, col legno, or his orchestration of Pictures at an Exhibition: how he assigned different instruments to different characters and what makes his orchestral palette uniquely transparent.",
+  },
+  {
+    category: "theory", subject: "theory-bartok-night-music",
+    prompt: "Describe Bartók's 'night music' texture: the specific combination of sounds he uses (chromatic string tremolos, isolated wind calls, piano clusters), where it first appeared, and how it influenced later composers. Give an example from his piano or orchestral works.",
+  },
+  {
+    category: "theory", subject: "theory-mahler-orchestration",
+    prompt: "Describe a specific orchestration technique from Mahler: his use of chamber-music transparency within the orchestra, his marking 'wie aus der Ferne' (as if from a distance), and a specific moment in his symphonies where this technique creates an extraordinary effect.",
+  },
+  {
+    category: "theory", subject: "theory-shostakovich-strings",
+    prompt: "Describe Shostakovich's characteristic string writing: his use of unison passages for emotional intensity, the grinding chromatic lines in his string quartets, and a specific moment from his Fifth Symphony or Eighth String Quartet that shows his distinctive voice.",
+  },
 
-  // ── ORCHESTRAL HISTORY (4 weight) ────────────────────────────────────────
-  { category: "history", weight: 2, theme: "orchestral", prompt: "describe a famous symphonic premiere or orchestral event — Beethoven's 1808 marathon concert, the 1913 Rite of Spring riot, Shostakovich's Leningrad Symphony premiere, or Mahler's 8th Symphony premiere. Give specific dates and facts." },
-  { category: "history", weight: 2, theme: "orchestral", prompt: "describe the history of a major orchestra — the Vienna Philharmonic, the Berlin Philharmonic, or the Concertgebouw — including a decisive moment in their history and their most iconic recording." },
+  // ════════════════════════════════════════════════════════
+  //  ORCHESTRAL — HISTORY (3)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "history", subject: "history-rite-of-spring",
+    prompt: "Describe the historical significance of The Rite of Spring (1913) as a turning point in music history: why its premiere caused a riot, what was so shocking about the rhythm and harmony, and how it changed what composers felt was possible in music.",
+  },
+  {
+    category: "history", subject: "history-vienna-philharmonic-founding",
+    prompt: "Describe the founding of the Vienna Philharmonic in 1842: who created it and why, the democratic self-governing structure of the orchestra, and a decisive moment in their history that defined their sound and identity as the world's most prestigious orchestra.",
+  },
+  {
+    category: "history", subject: "history-shostakovich-fifth",
+    prompt: "Describe the premiere of Shostakovich's Fifth Symphony in Leningrad in 1937: the political context (Stalin's terror, Shostakovich under threat after his Fourth was withdrawn), the audience weeping during the slow movement, and how the finale was interpreted differently by different listeners.",
+  },
 
-  // ── ORCHESTRAL THEORY (3 weight) ────────────────────────────────────────
-  { category: "theory", weight: 3, theme: "orchestral", prompt: "describe an interesting orchestration technique used by a great composer — Ravel's Boléro orchestration, Mahler's use of off-stage instruments, Shostakovich's string writing, or Bartók's night music textures. Explain how it works and why it sounds the way it does." },
-
-  // ── ORCHESTRAL MISC (3 weight) ───────────────────────────────────────────
-  { category: "misc", weight: 3, theme: "orchestral", prompt: "describe an interesting orchestral instrument that most people know little about — the alto flute, the contrabassoon, the Heckelphone, the Wagner tuba, or the sarrusophone — its sound, its history, and a famous solo written for it." },
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ── OTHER (5 total weight) ────────────────────────────────────────────────
-  { category: "fact", weight: 1, theme: "other", prompt: "a fascinating fact about a jazz legend — Bill Evans, Oscar Peterson, Keith Jarrett, or Thelonious Monk — and one landmark recording that changed jazz piano." },
-  { category: "quote", weight: 1, theme: "other", prompt: "a memorable quote from a jazz pianist — Bill Evans, Oscar Peterson, Keith Jarrett, or Herbie Hancock — about improvisation, listening, or the relationship between structure and freedom." },
-  { category: "misc", weight: 1, theme: "other", prompt: "introduce an interesting lesser-known composer who wrote primarily for keyboard or piano — give their name, era, most important work, and why they deserve far more attention than they receive." },
-  { category: "history", weight: 1, theme: "other", prompt: "describe an important event in the history of music recording technology — the first piano recording, the invention of magnetic tape, the arrival of LP records, or the first digital recording — and how it changed how we hear music." },
-  { category: "practice", weight: 1, theme: "other", prompt: "describe a mental practice technique — score study without the instrument, inner hearing, or practising away from the piano — used by a great musician. Explain the method and what it achieves." },
+  // ════════════════════════════════════════════════════════
+  //  OTHER (5)
+  // ════════════════════════════════════════════════════════
+  {
+    category: "fact", subject: "billevans-portrait-in-jazz",
+    prompt: "Write a specific fact about Bill Evans's recording of Portrait in Jazz (1959) with the first great piano trio: the revolutionary equal-voice interplay between Evans, Scott LaFaro, and Paul Motian, and how this recording changed how jazz piano trios play together.",
+  },
+  {
+    category: "quote", subject: "billevans-quote-practice",
+    prompt: "Share a specific quote from Bill Evans about his approach to practice, about what he called 'the universal mind', or about patience in learning. Give context about when and where he said it.",
+  },
+  {
+    category: "history", subject: "history-first-piano-recording",
+    prompt: "Describe the earliest known piano recordings in history: approximately when they were made (1890s), who made them, what the recording technology was like (cylinder phonograph), and what we can actually hear in these extraordinary documents.",
+  },
+  {
+    category: "misc", subject: "misc-prepared-piano",
+    prompt: "Describe John Cage's prepared piano: what it is (objects inserted between strings), when Cage invented it (late 1930s), which pieces use it most famously, and what the instrument sounds like — the combination of percussion and piano tones it creates.",
+  },
+  {
+    category: "misc", subject: "misc-theremin",
+    prompt: "Describe the theremin: how it works (played without touching it, using electromagnetic fields), who invented it and when (Léon Theremin, 1920), which classical composers wrote for it (Shostakovich, Martinu), and how it influenced the sound of 20th-century film music.",
+  },
 ];
 
-// ─── Build weighted pool ──────────────────────────────────────────────────────
+// ─── Topic queue (shuffled, consumed in order) ────────────────────────────────
 
-function buildWeightedPool(): TopicDef[] {
-  const pool: TopicDef[] = [];
-  for (const t of TOPICS) {
-    for (let i = 0; i < t.weight; i++) pool.push(t);
+let topicQueue: TopicDef[] = shuffle(ALL_TOPICS);
+let topicIndex = 0;
+
+function nextTopic(): TopicDef {
+  if (topicIndex >= topicQueue.length) {
+    topicQueue = shuffle(ALL_TOPICS);
+    topicIndex = 0;
   }
-  return pool;
+  return topicQueue[topicIndex++];
 }
 
-const WEIGHTED_POOL = buildWeightedPool();
+// ─── Served-item tracking (dedup) ────────────────────────────────────────────
 
-function pickTopic(excludeCategories: InspirationCategory[]): TopicDef {
-  const preferred = WEIGHTED_POOL.filter(t => !excludeCategories.includes(t.category));
-  const pool = preferred.length > 0 ? preferred : WEIGHTED_POOL;
-  return pool[Math.floor(Math.random() * pool.length)];
+const servedSubjects = new Set<string>();   // never repeat a subject
+const servedContentHashes = new Set<string>();
+
+function contentHash(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
 }
 
-// ─── AI generation ────────────────────────────────────────────────────────────
+function trackServed(item: InspirationItem & { subject: string }) {
+  servedSubjects.add(item.subject);
+  servedContentHashes.add(contentHash(item.content));
+  recentCategories.push(item.type);
+  if (recentCategories.length > RECENT_WINDOW) recentCategories.shift();
+}
 
-const aiPool: InspirationItem[] = [];
-const POOL_TARGET = 50;
+const recentCategories: InspirationCategory[] = [];
+const RECENT_WINDOW = 4;
+
+// ─── Pool of pre-generated items ─────────────────────────────────────────────
+
+type PoolItem = InspirationItem & { subject: string };
+
+const aiPool: PoolItem[] = [];
+const POOL_TARGET = 30;
 let isGenerating = false;
 
-async function generateOne(): Promise<InspirationItem | null> {
-  const exclude = recentCategories.slice(-RECENT_CAT_WINDOW);
-  const topic = pickTopic(exclude);
+async function generateOne(topic: TopicDef): Promise<PoolItem | null> {
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -251,20 +556,20 @@ async function generateOne(): Promise<InspirationItem | null> {
       messages: [
         {
           role: "system",
-          content: `You are a world-class music scholar with encyclopedic knowledge of the piano repertoire, jazz, and orchestral music. Your responses are vivid, specific, and surprising — you always include exact dates, opus numbers, and concrete details. You avoid clichés and never repeat content already covered. Respond ONLY with a valid JSON object. No markdown, no code fences.`,
+          content: `You are a world-class music scholar with encyclopedic knowledge of the piano repertoire, orchestral music, and jazz. Your responses are vivid, factually precise, and surprising — always include specific dates, names, opus numbers, and concrete details. Never be vague or generic. Respond ONLY with a valid JSON object. No markdown, no code fences.`,
         },
         {
           role: "user",
-          content: `Generate: ${topic.prompt}
+          content: `${topic.prompt}
 
 Return a JSON object with exactly these fields:
 - "type": "${topic.category}"
-- "content": 2–4 sentences in English — specific, vivid, factually accurate. Name exact works, dates, details. No vague generalities.
+- "content": 2–4 sentences in English, specific and factually accurate. Every sentence must add new information. No filler.
 - "author": full name of the musician or composer (null only for genuinely general facts)
 - "workTitle": exact title of the specific musical work mentioned (null if no specific piece)
-- "musicSearchQuery": English search query for YouTube — e.g. "Chopin Nocturne Op 9 No 2 Argerich" (null if no specific work or performer)
+- "musicSearchQuery": English search query for YouTube — e.g. "Chopin Nocturne Op 9 No 2 Argerich 1965" (null only if no specific work or performer is mentioned)
 
-JSON only. No markdown.`,
+JSON only.`,
         },
       ],
     });
@@ -282,9 +587,14 @@ JSON only. No markdown.`,
     }
 
     const content = String(parsed.content ?? "").trim();
-    if (!content || content.length < 30) return null;
+    if (!content || content.length < 40) return null;
+
+    // Reject if we've already served this subject or content
+    if (servedSubjects.has(topic.subject)) return null;
+    if (servedContentHashes.has(contentHash(content))) return null;
 
     return {
+      subject: topic.subject,
       type: (parsed.type as InspirationCategory) ?? topic.category,
       content,
       author: parsed.author ? String(parsed.author) : null,
@@ -300,21 +610,14 @@ async function fillPool() {
   if (isGenerating) return;
   isGenerating = true;
   try {
-    let attempts = 0;
-    while (aiPool.length < POOL_TARGET && attempts < POOL_TARGET * 3) {
-      attempts++;
-      const item = await generateOne();
-      if (!item) continue;
-      // Only add to pool if content isn't already in pool (pre-check)
-      const h = contentHash(item.content);
-      const titleKey = item.workTitle ? normalizeTitle(item.workTitle) : null;
-      const alreadyInPool = aiPool.some(p =>
-        contentHash(p.content) === h ||
-        (titleKey && p.workTitle && normalizeTitle(p.workTitle) === titleKey)
-      );
-      if (!alreadyInPool) {
-        aiPool.push(item);
+    while (aiPool.length < POOL_TARGET) {
+      const topic = nextTopic();
+      // Skip subjects already in pool or already served
+      if (servedSubjects.has(topic.subject) || aiPool.some(i => i.subject === topic.subject)) {
+        continue;
       }
+      const item = await generateOne(topic);
+      if (item) aiPool.push(item);
     }
   } finally {
     isGenerating = false;
@@ -325,33 +628,56 @@ setInterval(() => {
   if (aiPool.length < POOL_TARGET && !isGenerating) {
     fillPool().catch(() => {});
   }
-}, 10_000);
+}, 8_000);
 
 fillPool().catch(() => {});
+
+// ─── Fallback seed (English, for when pool is empty) ─────────────────────────
+
+const SEED_ITEMS: PoolItem[] = [
+  { subject: "seed-piano-strings", type: "fact", content: "A modern concert grand piano contains approximately 230 strings under a combined tension of around 20 tons — which is why the frame must be cast from a single piece of iron. The lowest bass strings are wound with copper wire to add mass without requiring impractical length.", author: null, workTitle: null, musicSearchQuery: null },
+  { subject: "seed-gould-humming", type: "fact", content: "Glenn Gould's famous humming on his recordings was not a studio affectation — it was an involuntary habit he could not control, even in the recording studio. Columbia Records engineers tried everything to suppress it; the humming remained audible on virtually every recording he made.", author: "Glenn Gould", workTitle: null, musicSearchQuery: null },
+  { subject: "seed-chopin-singing", type: "quote", content: "It is not necessary to play everything with a beautiful tone. Sometimes the piano should sound like a guitar.", author: "Frédéric Chopin", workTitle: null, musicSearchQuery: null },
+  { subject: "seed-arm-weight-tip", type: "tip", content: "When playing a deep, resonant piano tone, think of dropping arm weight into the key rather than pushing with the finger. The key should feel as if it sinks under the weight of a relaxed arm — not under the pressure of a tense finger. Tension kills resonance.", author: null, workTitle: null, musicSearchQuery: null },
+  { subject: "seed-rite-riot", type: "recording", content: "The premiere of Stravinsky's The Rite of Spring on May 29, 1913 in Paris ended in a riot. Audience members shouted, whistled, and fought while the dancers could barely hear the orchestra. One year later, the same Parisian public gave the concert version a standing ovation.", author: "Igor Stravinsky", workTitle: "The Rite of Spring", musicSearchQuery: "Stravinsky Rite of Spring Gergiev Mariinsky" },
+  { subject: "seed-tristan-chord", type: "theory", content: "The 'Tristan chord' — F, B, D♯, A♯ — opens Wagner's Tristan und Isolde and famously never resolves to a clear tonic throughout the entire four-hour opera. This single chord is often cited as the starting point for the breakdown of classical tonality that defined 20th-century music.", author: "Richard Wagner", workTitle: "Tristan und Isolde", musicSearchQuery: "Wagner Tristan Prelude Furtwangler" },
+  { subject: "seed-nocturne-idea", type: "inspiration", content: "Try writing a nocturne in D♭ major — Chopin's favourite key for intimate, nocturnal music. Use a wide-spanning left-hand accompaniment in 6/8, let the right-hand melody begin on the 5th degree, and introduce a chromatic inner voice in the second phrase to deepen the harmony.", author: null, workTitle: null, musicSearchQuery: null },
+  { subject: "seed-slow-practice", type: "practice", content: "Practise the passage at one quarter of the target speed, focusing on the physical sensation of each individual key going down. This is motor programming, not musical practice. Speed comes automatically once the movements are precisely encoded — rushing to full tempo before the movements are clean only reinforces mistakes.", author: null, workTitle: null, musicSearchQuery: null },
+];
+
+let seedIndex = 0;
+let seedDeck = shuffle(SEED_ITEMS);
+
+function nextSeedItem(excludeCats: InspirationCategory[]): PoolItem {
+  const available = seedDeck.filter(i => !excludeCats.includes(i.type) && !servedSubjects.has(i.subject));
+  if (available.length > 0) return available[Math.floor(Math.random() * available.length)];
+  if (seedIndex >= seedDeck.length) { seedDeck = shuffle(SEED_ITEMS); seedIndex = 0; }
+  return seedDeck[seedIndex++];
+}
 
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 router.get("/inspiration", (req, res) => {
-  const excludeCats = recentCategories.slice(-RECENT_CAT_WINDOW);
+  const excludeCats = recentCategories.slice(-RECENT_WINDOW);
 
-  // Select from pool: prefer fresh + different category
-  let item: InspirationItem | undefined;
+  let item: PoolItem | undefined;
 
   if (aiPool.length > 0) {
-    // Priority order: fresh content + different category > fresh content > different category > anything
-    const freshAndNew = aiPool.filter(i => isItemFresh(i) && !excludeCats.includes(i.type));
-    const freshAny    = aiPool.filter(i => isItemFresh(i));
-    const newCategory = aiPool.filter(i => !excludeCats.includes(i.type));
+    // 1. prefer fresh subject + different category
+    const best = aiPool.filter(i => !excludeCats.includes(i.type) && !servedSubjects.has(i.subject));
+    // 2. any fresh subject
+    const freshAny = aiPool.filter(i => !servedSubjects.has(i.subject));
+    // 3. different category
+    const diffCat = aiPool.filter(i => !excludeCats.includes(i.type));
 
-    const candidates = freshAndNew.length > 0 ? freshAndNew
+    const candidates = best.length > 0 ? best
       : freshAny.length > 0 ? freshAny
-      : newCategory.length > 0 ? newCategory
+      : diffCat.length > 0 ? diffCat
       : aiPool;
 
     const idx = Math.floor(Math.random() * candidates.length);
     item = candidates[idx];
-    const poolIdx = aiPool.indexOf(item);
-    if (poolIdx !== -1) aiPool.splice(poolIdx, 1);
+    aiPool.splice(aiPool.indexOf(item), 1);
 
     if (aiPool.length < POOL_TARGET * 0.5 && !isGenerating) {
       fillPool().catch(() => {});
@@ -359,11 +685,17 @@ router.get("/inspiration", (req, res) => {
   }
 
   if (!item) {
-    item = nextFallback(excludeCats);
+    item = nextSeedItem(excludeCats);
   }
 
   trackServed(item);
-  res.json(item);
+  res.json({
+    type: item.type,
+    content: item.content,
+    author: item.author,
+    workTitle: item.workTitle,
+    musicSearchQuery: item.musicSearchQuery,
+  });
 });
 
 export default router;
