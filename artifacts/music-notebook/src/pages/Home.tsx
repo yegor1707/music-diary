@@ -22,70 +22,70 @@ type CategoryMeta = {
 const CATEGORY_META: Record<InspirationCategory, CategoryMeta> = {
   fact: {
     icon: <Lightbulb className="w-4 h-4" />,
-    label: "Факт",
+    label: "Fact",
     color: "text-amber-700",
     bg: "bg-amber-50",
     border: "border-amber-200",
   },
   quote: {
     icon: <Quote className="w-4 h-4" />,
-    label: "Цитата",
+    label: "Quote",
     color: "text-indigo-700",
     bg: "bg-indigo-50",
     border: "border-indigo-200",
   },
   tip: {
     icon: <BookOpen className="w-4 h-4" />,
-    label: "Совет",
+    label: "Tip",
     color: "text-emerald-700",
     bg: "bg-emerald-50",
     border: "border-emerald-200",
   },
   recording: {
     icon: <Music2 className="w-4 h-4" />,
-    label: "История записи",
+    label: "Recording Story",
     color: "text-rose-700",
     bg: "bg-rose-50",
     border: "border-rose-200",
   },
   masterclass: {
     icon: <GraduationCap className="w-4 h-4" />,
-    label: "Мастер-класс",
+    label: "Masterclass",
     color: "text-violet-700",
     bg: "bg-violet-50",
     border: "border-violet-200",
   },
   theory: {
     icon: <Layers className="w-4 h-4" />,
-    label: "Теория",
+    label: "Theory",
     color: "text-sky-700",
     bg: "bg-sky-50",
     border: "border-sky-200",
   },
   inspiration: {
     icon: <Sparkles className="w-4 h-4" />,
-    label: "Вдохновение",
+    label: "Inspiration",
     color: "text-orange-700",
     bg: "bg-orange-50",
     border: "border-orange-200",
   },
   history: {
     icon: <Clock className="w-4 h-4" />,
-    label: "История музыки",
+    label: "Music History",
     color: "text-stone-700",
     bg: "bg-stone-50",
     border: "border-stone-200",
   },
   practice: {
     icon: <Dumbbell className="w-4 h-4" />,
-    label: "Практика",
+    label: "Practice",
     color: "text-teal-700",
     bg: "bg-teal-50",
     border: "border-teal-200",
   },
   misc: {
     icon: <Shuffle className="w-4 h-4" />,
-    label: "Разное",
+    label: "Miscellaneous",
     color: "text-fuchsia-700",
     bg: "bg-fuchsia-50",
     border: "border-fuchsia-200",
@@ -122,15 +122,15 @@ export default function HomePage() {
       {isLoading && (
         <div className="space-y-6">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="font-serif italic text-muted-foreground text-lg">Листаю страницы...</p>
+          <p className="font-serif italic text-muted-foreground text-lg">Searching the manuscripts...</p>
         </div>
       )}
 
       {isError && !isLoading && (
         <div className="space-y-4">
-          <p className="font-serif italic text-muted-foreground">Не удалось загрузить.</p>
+          <p className="font-serif italic text-muted-foreground">Could not load inspiration.</p>
           <button onClick={refresh} className="text-xs font-sans uppercase tracking-widest text-primary hover:opacity-70 transition-opacity">
-            Попробовать снова
+            Try again
           </button>
         </div>
       )}
@@ -197,7 +197,7 @@ export default function HomePage() {
                 )}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                Слушать на YouTube
+                Listen on YouTube
               </a>
             </div>
           )}
@@ -208,7 +208,7 @@ export default function HomePage() {
               className="flex items-center gap-2 text-xs font-sans uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Следующее
+              Next
             </button>
           </div>
         </div>
