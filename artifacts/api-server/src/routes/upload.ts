@@ -49,35 +49,35 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
   const supabase = getSupabaseClient();
 
-  if (!supabase) {
-    res.status(500).json({ error: "Supabase not configured", env: { hasUrl: !!process.env.SUPABASE_URL, hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY } });
-    return;
+  if (supabase) {
+    try {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const ext = path.extname(req.file.originalname);
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+
+      const { error } = await supabase.storage
+        .from("uploads")
+        .upload(fileName, fileBuffer, {
+          contentType: req.file.mimetype,
+          upsert: false,
+        });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage.from("uploads").getPublicUrl(fileName);
+
+      fs.unlinkSync(req.file.path);
+
+      logger.info({ fileName, url: data.publicUrl }, "File uploaded to Supabase Storage");
+      res.json({ url: data.publicUrl });
+      return;
+    } catch (err) {
+      logger.error({ err }, "Supabase upload failed, falling back to local");
+    }
   }
 
-  try {
-    const fileBuffer = fs.readFileSync(req.file.path);
-    const ext = path.extname(req.file.originalname);
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-
-    const { error } = await supabase.storage
-      .from("uploads")
-      .upload(fileName, fileBuffer, {
-        contentType: req.file.mimetype,
-        upsert: false,
-      });
-
-    if (error) throw error;
-
-    const { data } = supabase.storage.from("uploads").getPublicUrl(fileName);
-
-    fs.unlinkSync(req.file.path);
-
-    logger.info({ fileName, url: data.publicUrl }, "File uploaded to Supabase Storage");
-    res.json({ url: data.publicUrl });
-  } catch (err: any) {
-    logger.error({ err }, "Supabase upload failed");
-    res.status(500).json({ error: "Supabase upload failed", message: err?.message ?? String(err) });
-  }
+  const localUrl = `/api/uploads/${req.file.filename}`;
+  res.json({ url: localUrl });
 });
 
 router.get("/uploads/:filename", (req, res) => {
