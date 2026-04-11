@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Lock, Unlock, Music, Users, BookOpen, GraduationCap, FileText } from "lucide-react";
+import { Lock, Unlock, Music, Users, BookOpen, GraduationCap, FileText, Scroll } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useRef } from "react";
 import { Modal } from "./ui/modal";
@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/pieces", label: "Music", icon: Music },
   { href: "/composers", label: "Composers", icon: Users },
-  { href: "/books", label: "Methodical Books", icon: BookOpen },
+  { href: "/books", label: "Books", icon: BookOpen },
   { href: "/masterclasses", label: "Masterclasses", icon: GraduationCap },
   { href: "/notes", label: "Notes", icon: FileText },
+  { href: "/chronicle", label: "Chronicle", icon: Scroll },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

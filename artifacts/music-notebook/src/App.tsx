@@ -23,6 +23,7 @@ const BooksPage          = lazy(() => import("@/pages/Books"));
 const BookDetailPage     = lazy(() => import("@/pages/BookDetail"));
 const MasterclassesPage  = lazy(() => import("@/pages/Masterclasses"));
 const MasterclassDetailPage = lazy(() => import("@/pages/MasterclassDetail"));
+const ChroniclePage      = lazy(() => import("@/pages/Chronicle"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,8 @@ function Router() {
 
         <Route path="/notes" component={NotesPage} />
         <Route path="/notes/:id" component={NoteDetailPage} />
+
+        <Route path="/chronicle" component={ChroniclePage} />
 
         <Route>
           <div className="text-center py-32 font-serif text-2xl italic text-muted-foreground">
