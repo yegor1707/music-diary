@@ -119,8 +119,20 @@ export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <FormGroup label="Title"><Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Title of your note" /></FormGroup>
-      <FormGroup label="Chapter / Subtitle"><Input value={formData.chapterTitle} onChange={e => setFormData({...formData, chapterTitle: e.target.value})} placeholder="Optional subtitle" /></FormGroup>
+      <FormGroup label="Заголовок">
+        <Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Название заметки" />
+      </FormGroup>
+      {!isMasterclass && (
+        <FormGroup label="Текст заметки">
+          <textarea
+            value={formData.content}
+            onChange={e => setFormData({...formData, content: e.target.value})}
+            placeholder="Напишите заметку..."
+            rows={6}
+            className="w-full bg-background border border-border rounded-sm px-3 py-2 font-serif text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 resize-y"
+          />
+        </FormGroup>
+      )}
       {isMasterclass ? (
         <FormGroup label="YouTube Video URL">
           <Input
@@ -131,9 +143,11 @@ export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: {
           />
         </FormGroup>
       ) : (
-        <FormGroup label="Cover Image"><ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} /></FormGroup>
+        <FormGroup label="Фото (необязательно)">
+          <ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} />
+        </FormGroup>
       )}
-      <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save Note</Button></div>
+      <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Сохранить</Button></div>
     </form>
   );
 }
