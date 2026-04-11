@@ -19,7 +19,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
           onClick={onClose}
           className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-1 text-sm font-sans"
         >
-          <XIcon className="w-5 h-5" /> Закрыть
+          <XIcon className="w-5 h-5" /> Close
         </button>
         <img src={src} alt={alt} className="w-full h-auto max-h-[85vh] object-contain rounded-sm" />
       </div>
@@ -36,7 +36,7 @@ function DiaryEntry({ note, isEditing }: { note: Note; isEditing: boolean }) {
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Удалить эту запись?")) {
+    if (confirm("Delete this entry?")) {
       await deleteNote.mutateAsync({ id: note.id });
       queryClient.invalidateQueries({ queryKey: getListNotesQueryKey() });
     }
@@ -65,7 +65,7 @@ function DiaryEntry({ note, isEditing }: { note: Note; isEditing: boolean }) {
               </div>
               {!expanded && (
                 <p className="font-serif text-muted-foreground text-sm leading-snug line-clamp-1 mt-0.5">
-                  {previewText || <span className="italic">Нет текста</span>}
+                  {previewText || <span className="italic">No text</span>}
                 </p>
               )}
             </div>
@@ -100,7 +100,7 @@ function DiaryEntry({ note, isEditing }: { note: Note; isEditing: boolean }) {
               <div
                 className="float-right ml-5 mb-3 mt-4 w-2/5 max-w-[220px] cursor-pointer rounded-sm overflow-hidden border border-border/40 shadow-sm hover:shadow-md hover:border-border/70 transition-all"
                 onClick={() => setLightboxSrc(note.imageUrl!)}
-                title="Нажмите для просмотра"
+                title="Click to view"
               >
                 <img
                   src={note.imageUrl}
@@ -116,7 +116,7 @@ function DiaryEntry({ note, isEditing }: { note: Note; isEditing: boolean }) {
                 </p>
               )) : (
                 <p className="font-serif italic text-muted-foreground py-4">
-                  Запись пуста.
+                  Empty entry.
                 </p>
               )}
             </div>
@@ -125,13 +125,13 @@ function DiaryEntry({ note, isEditing }: { note: Note; isEditing: boolean }) {
               onClick={() => setExpanded(false)}
               className="mt-5 text-[0.6rem] font-sans uppercase tracking-[0.2em] text-muted-foreground/50 hover:text-primary transition-colors flex items-center gap-1"
             >
-              <ChevronUp className="w-3 h-3" /> Свернуть
+              <ChevronUp className="w-3 h-3" /> Collapse
             </button>
           </div>
         )}
       </div>
 
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Редактировать запись">
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Note">
         <NoteForm initialData={note} onSuccess={() => setIsEditOpen(false)} />
       </Modal>
 
@@ -165,15 +165,15 @@ export default function NotesPage() {
     });
   }, [allNotes, search, dateFilter]);
 
-  if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Листаю страницы...</div>;
+  if (isLoading) return <div className="text-center py-20 font-serif italic text-muted-foreground">Loading...</div>;
 
   return (
     <div className="animate-in fade-in duration-500 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif italic text-3xl text-foreground">Заметки</h2>
+        <h2 className="font-serif italic text-3xl text-foreground">Notes</h2>
         {isEditing && (
           <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
-            <Plus className="w-4 h-4" /> Новая запись
+            <Plus className="w-4 h-4" /> New Entry
           </button>
         )}
       </div>
@@ -185,7 +185,7 @@ export default function NotesPage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Поиск по заметкам..."
+            placeholder="Search notes..."
             className="w-full bg-transparent text-foreground font-serif text-sm placeholder:text-muted-foreground/50 focus:outline-none"
           />
           {search && (
@@ -210,7 +210,7 @@ export default function NotesPage() {
         <div className="text-center py-20 border border-dashed border-border rounded-sm bg-card/50">
           <Feather className="w-8 h-8 mx-auto text-muted-foreground mb-4 opacity-50" />
           <p className="font-serif italic text-muted-foreground text-lg">
-            {search || dateFilter ? "Записей не найдено." : "Дневник пуст."}
+            {search || dateFilter ? "No notes found." : "The diary is empty."}
           </p>
         </div>
       ) : (
@@ -221,7 +221,7 @@ export default function NotesPage() {
         </div>
       )}
 
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Новая запись">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="New Entry">
         <NoteForm defaultSection="notes" onSuccess={() => setIsAddModalOpen(false)} />
       </Modal>
     </div>

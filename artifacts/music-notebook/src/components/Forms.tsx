@@ -119,15 +119,15 @@ export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <FormGroup label="Заголовок">
-        <Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Название заметки" />
+      <FormGroup label="Title">
+        <Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Note title" />
       </FormGroup>
       {!isMasterclass && (
-        <FormGroup label="Текст заметки">
+        <FormGroup label="Content">
           <textarea
             value={formData.content}
             onChange={e => setFormData({...formData, content: e.target.value})}
-            placeholder="Напишите заметку..."
+            placeholder="Write your note..."
             rows={6}
             className="w-full bg-background border border-border rounded-sm px-3 py-2 font-serif text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 resize-y"
           />
@@ -143,11 +143,11 @@ export function NoteForm({ initialData, onSuccess, defaultSection = "notes" }: {
           />
         </FormGroup>
       ) : (
-        <FormGroup label="Фото (необязательно)">
+        <FormGroup label="Image (optional)">
           <ImageUpload value={formData.imageUrl} onChange={url => setFormData({...formData, imageUrl: url})} />
         </FormGroup>
       )}
-      <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Сохранить</Button></div>
+      <div className="flex justify-end pt-4"><Button type="submit" isLoading={isPending}>Save</Button></div>
     </form>
   );
 }

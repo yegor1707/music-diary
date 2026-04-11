@@ -7,7 +7,6 @@ import {
   useListBooks,
 } from "@workspace/api-client-react";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
-import { ru } from "date-fns/locale";
 import { Music, Users, BookOpen, GraduationCap, FileText, Scroll } from "lucide-react";
 
 type EventKind = "piece" | "composer" | "book" | "masterclass" | "note";
@@ -22,18 +21,18 @@ interface ActivityEvent {
 }
 
 const KIND_META: Record<EventKind, { label: string; Icon: React.FC<{ className?: string }>; color: string }> = {
-  piece:       { label: "Произведение",  Icon: Music,         color: "text-amber-700" },
-  composer:    { label: "Композитор",    Icon: Users,         color: "text-stone-600" },
-  book:        { label: "Книга",         Icon: BookOpen,      color: "text-emerald-700" },
-  masterclass: { label: "Мастеркласс",  Icon: GraduationCap, color: "text-blue-700" },
-  note:        { label: "Заметка",       Icon: FileText,      color: "text-rose-700" },
+  piece:       { label: "Piece",       Icon: Music,         color: "text-amber-700" },
+  composer:    { label: "Composer",    Icon: Users,         color: "text-stone-600" },
+  book:        { label: "Book",        Icon: BookOpen,      color: "text-emerald-700" },
+  masterclass: { label: "Masterclass", Icon: GraduationCap, color: "text-blue-700" },
+  note:        { label: "Note",        Icon: FileText,      color: "text-rose-700" },
 };
 
 function formatDateLabel(dateStr: string): string {
   const d = parseISO(dateStr);
-  if (isToday(d))     return `Сегодня — ${format(d, "d MMMM yyyy", { locale: ru })}`;
-  if (isYesterday(d)) return `Вчера — ${format(d, "d MMMM yyyy", { locale: ru })}`;
-  return format(d, "EEEE, d MMMM yyyy", { locale: ru });
+  if (isToday(d))     return `Today — ${format(d, "MMMM d, yyyy")}`;
+  if (isYesterday(d)) return `Yesterday — ${format(d, "MMMM d, yyyy")}`;
+  return format(d, "EEEE, MMMM d, yyyy");
 }
 
 export default function ChroniclePage() {
@@ -80,15 +79,15 @@ export default function ChroniclePage() {
   const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
 
   if (isLoading) {
-    return <div className="text-center py-20 font-serif italic text-muted-foreground">Листаю страницы...</div>;
+    return <div className="text-center py-20 font-serif italic text-muted-foreground">Loading...</div>;
   }
 
   return (
     <div className="animate-in fade-in duration-500 max-w-2xl mx-auto">
       <div className="mb-10">
-        <h2 className="font-serif italic text-3xl text-foreground">Хроника</h2>
+        <h2 className="font-serif italic text-3xl text-foreground">Chronicle</h2>
         <p className="font-sans text-xs uppercase tracking-widest text-muted-foreground mt-1">
-          Твой прогресс по дням
+          Your progress by day
         </p>
       </div>
 
@@ -96,10 +95,10 @@ export default function ChroniclePage() {
         <div className="text-center py-24 border border-dashed border-border rounded-sm bg-card/50">
           <Scroll className="w-8 h-8 mx-auto text-muted-foreground mb-4 opacity-40" />
           <p className="font-serif italic text-muted-foreground text-lg">
-            Пока ничего не добавлено.
+            Nothing added yet.
           </p>
           <p className="font-sans text-xs uppercase tracking-widest text-muted-foreground mt-2 opacity-50">
-            Добавляй произведения, композиторов, заметки — и они появятся здесь
+            Add pieces, composers, notes — and they will appear here
           </p>
         </div>
       ) : (
@@ -115,9 +114,9 @@ export default function ChroniclePage() {
                   <div className="md:w-24 flex-shrink-0 mb-3 md:mb-0 text-right pr-0 md:pr-5">
                     <span className={`text-[0.58rem] font-sans font-semibold uppercase tracking-[0.15em] leading-tight block ${isNow ? "text-primary" : "text-muted-foreground/70"}`}>
                       {isNow ? (
-                        <>Сегодня<br /><span className="normal-case tracking-normal opacity-70">{format(parseISO(dateKey), "d MMM", { locale: ru })}</span></>
+                        <>Today<br /><span className="normal-case tracking-normal opacity-70">{format(parseISO(dateKey), "MMM d")}</span></>
                       ) : (
-                        format(parseISO(dateKey), "d MMM", { locale: ru })
+                        format(parseISO(dateKey), "MMM d")
                       )}
                     </span>
                   </div>
@@ -156,7 +155,7 @@ export default function ChroniclePage() {
                     </div>
 
                     <p className="font-sans text-[0.6rem] text-muted-foreground/40 mt-2 tracking-wide">
-                      {dayEvents.length} {dayEvents.length === 1 ? "запись" : dayEvents.length < 5 ? "записи" : "записей"}
+                      {dayEvents.length} {dayEvents.length === 1 ? "entry" : "entries"}
                     </p>
                   </div>
                 </div>
