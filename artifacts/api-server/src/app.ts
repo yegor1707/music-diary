@@ -44,7 +44,7 @@ const frontendDist = possiblePaths.find((p) => fs.existsSync(p));
 if (frontendDist) {
   logger.info({ frontendDist }, "Serving frontend static files");
   app.use(express.static(frontendDist));
-  app.get("*", (_req, res) => {
+  app.get("*path", (_req, res) => {
     res.sendFile(path.join(frontendDist, "index.html"));
   });
 } else {
