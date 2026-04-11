@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "Tns86apEDltOSnVF8BrgT"
+uri = "file://artifacts/music-notebook/public/icon-180.png"
+type = "image"
+title = "music note icon clean"
