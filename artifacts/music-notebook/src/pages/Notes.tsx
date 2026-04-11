@@ -43,104 +43,95 @@ function DiaryEntry({ note, isEditing }: { note: Note; isEditing: boolean }) {
   };
 
   const paragraphs = (note.content || "").split("\n").filter(Boolean);
-  const preview = paragraphs[0] || "";
-  const hasMore = paragraphs.length > 1 || (preview.length > 160);
+  const previewText = paragraphs[0]?.slice(0, 120) || "";
 
   return (
     <>
-      <div className="bg-card notebook-border overflow-hidden transition-all">
+      <div className="bg-card notebook-border overflow-hidden">
+        {/* Collapsed header — always visible, click to toggle */}
         <div
-          className="p-5 cursor-pointer hover:bg-muted/20 transition-colors"
+          className="px-5 py-4 cursor-pointer hover:bg-muted/20 transition-colors"
           onClick={() => setExpanded(e => !e)}
         >
-          <div className="flex items-start gap-4">
-            {note.imageUrl && (
-              <div
-                className="flex-shrink-0 w-14 h-14 rounded-sm overflow-hidden border border-border/50 cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all mt-1"
-                onClick={e => {
-                  e.stopPropagation();
-                  setLightboxSrc(note.imageUrl!);
-                }}
-                title="Нажмите для просмотра"
-              >
-                <img src={note.imageUrl} alt={note.title} className="w-full h-full object-cover" />
-              </div>
-            )}
+          <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <span className="text-[0.6rem] font-sans font-semibold uppercase tracking-[0.2em] text-primary">
-                    {note.createdAt ? format(new Date(note.createdAt), "d MMMM yyyy") : "—"}
-                  </span>
-                  <h3 className="font-serif font-bold text-xl text-foreground leading-tight mt-0.5">
-                    {note.title}
-                  </h3>
-                  {note.chapterTitle && (
-                    <p className="font-sans text-[0.65rem] uppercase tracking-widest text-muted-foreground mt-0.5">
-                      {note.chapterTitle}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {isEditing && (
-                    <>
-                      <button
-                        onClick={e => { e.stopPropagation(); setIsEditOpen(true); }}
-                        className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                        title="Редактировать"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        className="p-1.5 text-muted-foreground hover:text-red-700 transition-colors"
-                        title="Удалить"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </>
-                  )}
-                  <span className="text-muted-foreground/50">
-                    {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </span>
-                </div>
+              <div className="flex items-baseline gap-3 mb-0.5">
+                <h3 className="font-serif font-bold text-lg text-foreground leading-tight">
+                  {note.title}
+                </h3>
+                <span className="text-[0.6rem] font-sans text-muted-foreground/60 flex-shrink-0">
+                  {note.createdAt ? format(new Date(note.createdAt), "d MMM yyyy") : ""}
+                </span>
               </div>
-
               {!expanded && (
-                <p className="font-serif italic text-muted-foreground text-sm leading-relaxed mt-2 line-clamp-2">
-                  {preview || "Запись без текста."}
+                <p className="font-serif text-muted-foreground text-sm leading-snug line-clamp-1 mt-0.5">
+                  {previewText || <span className="italic">Нет текста</span>}
                 </p>
               )}
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+              {isEditing && (
+                <>
+                  <button
+                    onClick={e => { e.stopPropagation(); setIsEditOpen(true); }}
+                    className="p-1.5 text-muted-foreground/50 hover:text-primary transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="p-1.5 text-muted-foreground/50 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+              <span className="text-muted-foreground/40 ml-1">
+                {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </span>
             </div>
           </div>
         </div>
 
+        {/* Expanded content */}
         {expanded && (
-          <div className="px-5 pb-6 pt-1 border-t border-border/30">
-            <div className="space-y-3 mt-3">
+          <div className="px-5 pb-6 border-t border-border/20">
+            {note.imageUrl && (
+              <div
+                className="float-right ml-5 mb-3 mt-4 w-2/5 max-w-[220px] cursor-pointer rounded-sm overflow-hidden border border-border/40 shadow-sm hover:shadow-md hover:border-border/70 transition-all"
+                onClick={() => setLightboxSrc(note.imageUrl!)}
+                title="Нажмите для просмотра"
+              >
+                <img
+                  src={note.imageUrl}
+                  alt={note.title}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            )}
+            <div className="mt-4 space-y-3">
               {paragraphs.length > 0 ? paragraphs.map((para, i) => (
-                <p key={i} className="font-serif text-foreground/90 text-[1.05rem] leading-[1.9]">
+                <p key={i} className="font-serif text-foreground/90 text-base leading-[1.85]">
                   {para}
                 </p>
               )) : (
-                <p className="font-serif italic text-muted-foreground text-center py-4">
+                <p className="font-serif italic text-muted-foreground py-4">
                   Запись пуста.
                 </p>
               )}
             </div>
-            {hasMore && (
-              <button
-                onClick={() => setExpanded(false)}
-                className="mt-5 text-[0.6rem] font-sans uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-              >
-                <ChevronUp className="w-3 h-3" /> Свернуть
-              </button>
-            )}
+            <div className="clear-both" />
+            <button
+              onClick={() => setExpanded(false)}
+              className="mt-5 text-[0.6rem] font-sans uppercase tracking-[0.2em] text-muted-foreground/50 hover:text-primary transition-colors flex items-center gap-1"
+            >
+              <ChevronUp className="w-3 h-3" /> Свернуть
+            </button>
           </div>
         )}
       </div>
 
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Note">
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Редактировать запись">
         <NoteForm initialData={note} onSuccess={() => setIsEditOpen(false)} />
       </Modal>
 
