@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "path";
+import fs from "fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -29,10 +31,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (_req, res) => {
-  res.json({ name: "Music Diary API", status: "ok", version: "1.0.0" });
-});
-
 app.use("/api", router);
+
+const frontendDist = path.resolve(process.cwd(), "artifacts/music-notebook/dist/public");
+
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+} else {
+  app.get("/", (_req, res) => {
+    res.json({ name: "Music Diary API", status: "ok", version: "1.0.0" });
+  });
+}
 
 export default app;
