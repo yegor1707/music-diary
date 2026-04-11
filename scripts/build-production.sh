@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
+echo "Setting up pnpm..."
+npm install -g pnpm
+
 echo "Installing dependencies..."
-pnpm install
+pnpm install --frozen-lockfile
 
 echo "Building frontend..."
 pnpm --filter @workspace/music-notebook run build
