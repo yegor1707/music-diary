@@ -3,7 +3,7 @@ import { useUploadImage } from "@workspace/api-client-react";
 import { 
   Plus, Trash2, Image as ImageIcon, FileText, Quote, Type, 
   Heading2, Music2, ChevronUp, ChevronDown, Loader2, Clock, Youtube,
-  LayoutTemplate
+  LayoutTemplate, List, Bold
 } from "lucide-react";
 
 export type ImageSize = "small" | "medium" | "large" | "full";
@@ -18,7 +18,8 @@ export type Block =
   | { id: string; type: "quote"; content: string }
   | { id: string; type: "timestamp"; time: string; label: string }
   | { id: string; type: "video"; url: string; caption: string }
-  | { id: string; type: "image-text"; imageUrl: string; caption: string; text: string; imagePosition: "left" | "right"; size: ImageSize };
+  | { id: string; type: "image-text"; imageUrl: string; caption: string; text: string; imagePosition: "left" | "right"; size: ImageSize }
+  | { id: string; type: "list"; items: string[] };
 
 export type EditorMode = "piece" | "content" | "notes";
 
@@ -54,6 +55,7 @@ const BLOCK_LABELS: Record<Block["type"], string> = {
   timestamp: "Timestamp",
   video: "Video",
   "image-text": "Image + Text",
+  list: "Bullet List",
 };
 
 const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
@@ -67,13 +69,14 @@ const BLOCK_ICONS: Record<Block["type"], React.ReactNode> = {
   timestamp: <Clock className="w-3.5 h-3.5" />,
   video: <Youtube className="w-3.5 h-3.5" />,
   "image-text": <LayoutTemplate className="w-3.5 h-3.5" />,
+  list: <List className="w-3.5 h-3.5" />,
 };
 
 function getBlockTypes(mode: EditorMode): Block["type"][] {
-  const base: Block["type"][] = ["text", "heading", "subheading", "image", "image-text", "score", "pdf", "quote"];
+  const base: Block["type"][] = ["text", "heading", "subheading", "list", "image", "image-text", "score", "pdf", "quote"];
   if (mode === "piece") return [...base, "timestamp"];
   if (mode === "content") return [...base, "video"];
-  if (mode === "notes") return ["text", "heading", "image", "image-text", "quote"];
+  if (mode === "notes") return ["text", "heading", "list", "image", "image-text", "quote"];
   return base;
 }
 
@@ -113,6 +116,48 @@ const IMAGE_TEXT_SIZE_OPTIONS: { value: ImageSize; label: string }[] = [
   { value: "large", label: "Image 75% / Text 25%" },
 ];
 
+const textareaClass = "w-full bg-white border border-border/40 p-3 rounded-sm text-gray-900 font-serif text-base leading-relaxed placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors resize-y";
+const inputClass = "w-full bg-transparent border-b border-border/50 pb-1.5 text-gray-900 font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400";
+
+function applyBoldToTextarea(
+  textarea: HTMLTextAreaElement,
+  value: string,
+  onChange: (v: string) => void
+) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = value.slice(start, end);
+  const newValue = value.slice(0, start) + `**${selected || "жирный текст"}**` + value.slice(end);
+  onChange(newValue);
+  setTimeout(() => {
+    textarea.focus();
+    const newCursor = end + (selected ? 4 : 4 + "жирный текст".length);
+    textarea.setSelectionRange(newCursor, newCursor);
+  }, 0);
+}
+
+function TextToolbar({ textareaRef, value, onChange }: {
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 mb-2">
+      <button
+        type="button"
+        title="Bold (выделите текст и нажмите)"
+        onClick={() => {
+          if (textareaRef.current) applyBoldToTextarea(textareaRef.current, value, onChange);
+        }}
+        className="flex items-center gap-1 px-2 py-0.5 text-xs font-bold font-sans border border-border/50 rounded-sm hover:bg-muted transition-colors text-gray-700"
+      >
+        <Bold className="w-3 h-3" /> Bold
+      </button>
+      <span className="text-[0.6rem] text-gray-400 font-sans ml-1">Выделите текст и нажмите Bold</span>
+    </div>
+  );
+}
+
 function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast }: {
   block: Block;
   onChange: (b: Block) => void;
@@ -122,7 +167,7 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
   isFirst: boolean;
   isLast: boolean;
 }) {
-  const baseInput = "w-full bg-transparent border-b border-border/50 pb-1.5 text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40";
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   return (
     <div className="group relative bg-card notebook-border p-4 transition-shadow hover:shadow-sm">
@@ -139,12 +184,20 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
       </div>
 
       {block.type === "text" && (
-        <textarea
-          value={block.content}
-          onChange={e => onChange({ ...block, content: e.target.value })}
-          placeholder="Write a paragraph..."
-          className="w-full bg-transparent border border-border/40 p-3 rounded-sm text-foreground font-serif text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors min-h-[100px] resize-y"
-        />
+        <div>
+          <TextToolbar
+            textareaRef={textareaRef}
+            value={block.content}
+            onChange={v => onChange({ ...block, content: v })}
+          />
+          <textarea
+            ref={textareaRef}
+            value={block.content}
+            onChange={e => onChange({ ...block, content: e.target.value })}
+            placeholder="Напишите абзац..."
+            className={`${textareaClass} min-h-[100px]`}
+          />
+        </div>
       )}
 
       {(block.type === "heading" || block.type === "subheading") && (
@@ -152,8 +205,8 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
           type="text"
           value={block.content}
           onChange={e => onChange({ ...block, content: e.target.value })}
-          placeholder={block.type === "heading" ? "Section heading..." : "Sub-section heading..."}
-          className={`${baseInput} ${block.type === "heading" ? "text-2xl font-bold" : "text-xl"}`}
+          placeholder={block.type === "heading" ? "Заголовок раздела..." : "Подзаголовок..."}
+          className={`${inputClass} ${block.type === "heading" ? "text-2xl font-bold" : "text-xl"}`}
         />
       )}
 
@@ -161,9 +214,60 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
         <textarea
           value={block.content}
           onChange={e => onChange({ ...block, content: e.target.value })}
-          placeholder="Musical excerpt or quote..."
-          className="w-full bg-transparent border-l-2 border-primary/40 pl-4 text-foreground font-serif text-base italic leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[80px] resize-y"
+          placeholder="Цитата или музыкальный фрагмент..."
+          className="w-full bg-white border-l-2 border-primary/40 pl-4 text-gray-900 font-serif text-base italic leading-relaxed placeholder:text-gray-400 focus:outline-none min-h-[80px] resize-y p-2"
         />
+      )}
+
+      {block.type === "list" && (
+        <div className="space-y-2">
+          {block.items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-primary font-bold flex-shrink-0">•</span>
+              <input
+                type="text"
+                value={item}
+                onChange={e => {
+                  const items = [...block.items];
+                  items[i] = e.target.value;
+                  onChange({ ...block, items });
+                }}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const items = [...block.items];
+                    items.splice(i + 1, 0, "");
+                    onChange({ ...block, items });
+                  }
+                  if (e.key === "Backspace" && item === "" && block.items.length > 1) {
+                    e.preventDefault();
+                    const items = block.items.filter((_, j) => j !== i);
+                    onChange({ ...block, items });
+                  }
+                }}
+                placeholder="Пункт списка..."
+                className="flex-1 bg-white border border-border/40 px-3 py-1.5 rounded-sm text-gray-900 font-serif text-base placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
+              />
+              {block.items.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                  className="p-1 text-muted-foreground hover:text-red-600 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => onChange({ ...block, items: [...block.items, ""] })}
+            className="flex items-center gap-1.5 text-xs font-sans text-primary hover:opacity-80 transition-opacity mt-1"
+          >
+            <Plus className="w-3 h-3" /> Добавить пункт
+          </button>
+          <p className="text-[0.6rem] font-sans text-gray-400 uppercase tracking-widest">Enter — новый пункт, Backspace на пустом — удалить</p>
+        </div>
       )}
 
       {(block.type === "image" || block.type === "score") && (
@@ -175,8 +279,8 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
               type="text"
               value={block.url}
               onChange={e => onChange({ ...block, url: e.target.value })}
-              placeholder="Paste image URL..."
-              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              placeholder="Вставьте URL изображения..."
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-gray-900 font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
             />
           </div>
           {block.url && (
@@ -212,8 +316,8 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
               type="text"
               value={block.caption}
               onChange={e => onChange({ ...block, caption: e.target.value })}
-              placeholder="Caption (optional)..."
-              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40 min-w-[120px]"
+              placeholder="Подпись (необязательно)..."
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-gray-900 font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400 min-w-[120px]"
             />
           </div>
         </div>
@@ -257,8 +361,8 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                 type="text"
                 value={block.imageUrl}
                 onChange={e => onChange({ ...block, imageUrl: e.target.value })}
-                placeholder="Paste image URL..."
-                className="w-full bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+                placeholder="Вставьте URL изображения..."
+                className="w-full bg-transparent border-b border-border/50 pb-1 text-sm text-gray-900 font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
               />
               {block.imageUrl && (
                 <img src={block.imageUrl} alt="" className="max-h-32 w-auto rounded-sm border border-border/30 object-contain mt-2" />
@@ -267,8 +371,8 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                 type="text"
                 value={block.caption}
                 onChange={e => onChange({ ...block, caption: e.target.value })}
-                placeholder="Caption (optional)..."
-                className="w-full bg-transparent border-b border-border/50 pb-1 text-xs text-muted-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+                placeholder="Подпись (необязательно)..."
+                className="w-full bg-transparent border-b border-border/50 pb-1 text-xs text-muted-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-2">
@@ -276,8 +380,8 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
               <textarea
                 value={block.text}
                 onChange={e => onChange({ ...block, text: e.target.value })}
-                placeholder="Write text beside the image..."
-                className="w-full bg-transparent border border-border/40 p-3 rounded-sm text-foreground font-serif text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors min-h-[120px] resize-y"
+                placeholder="Напишите текст рядом с изображением..."
+                className={`${textareaClass} min-h-[120px] text-sm`}
               />
             </div>
           </div>
@@ -293,16 +397,16 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
               type="text"
               value={block.url}
               onChange={e => onChange({ ...block, url: e.target.value })}
-              placeholder="Paste PDF URL..."
-              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-foreground font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              placeholder="Вставьте URL PDF..."
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-sm text-gray-900 font-serif focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
             />
           </div>
           <input
             type="text"
             value={block.title}
             onChange={e => onChange({ ...block, title: e.target.value })}
-            placeholder="Document title..."
-            className={`${baseInput} text-sm`}
+            placeholder="Название документа..."
+            className={`${inputClass} text-sm`}
           />
         </div>
       )}
@@ -317,19 +421,19 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
                 value={block.time}
                 onChange={e => onChange({ ...block, time: e.target.value })}
                 placeholder="1:23 or 12:34"
-                className="w-24 bg-transparent border-b border-border/50 pb-1 text-foreground font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+                className="w-24 bg-transparent border-b border-border/50 pb-1 text-gray-900 font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
               />
             </div>
             <input
               type="text"
               value={block.label}
               onChange={e => onChange({ ...block, label: e.target.value })}
-              placeholder="Description (e.g. Development section starts)"
-              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-foreground font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+              placeholder="Описание (напр. Начало разработки)"
+              className="flex-1 bg-transparent border-b border-border/50 pb-1 text-gray-900 font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
             />
           </div>
           <p className="text-[0.6rem] font-sans text-muted-foreground/60 uppercase tracking-widest">
-            Clicking this timestamp will seek to that moment in the YouTube recording above.
+            Нажатие на метку перемотает запись до этого момента.
           </p>
         </div>
       )}
@@ -341,14 +445,14 @@ function BlockEditor({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst,
             value={block.url}
             onChange={e => onChange({ ...block, url: e.target.value })}
             placeholder="YouTube URL (https://www.youtube.com/watch?v=...)"
-            className="w-full bg-transparent border-b border-border/50 pb-1.5 text-foreground font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
+            className="w-full bg-transparent border-b border-border/50 pb-1.5 text-gray-900 font-serif text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-gray-400"
           />
           <input
             type="text"
             value={block.caption}
             onChange={e => onChange({ ...block, caption: e.target.value })}
-            placeholder="Caption (optional)..."
-            className={`${baseInput} text-sm text-muted-foreground`}
+            placeholder="Подпись (необязательно)..."
+            className={`${inputClass} text-sm text-muted-foreground`}
           />
         </div>
       )}
@@ -369,6 +473,7 @@ function createBlock(type: Block["type"]): Block {
     case "timestamp": return { id, type: "timestamp", time: "", label: "" };
     case "video": return { id, type: "video", url: "", caption: "" };
     case "image-text": return { id, type: "image-text", imageUrl: "", caption: "", text: "", imagePosition: "left", size: "medium" };
+    case "list": return { id, type: "list", items: [""] };
   }
 }
 

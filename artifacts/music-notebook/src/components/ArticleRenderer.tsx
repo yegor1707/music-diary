@@ -8,6 +8,16 @@ const SIZE_WIDTHS: Record<Exclude<ImageSize, "full">, string> = {
   large: "75%",
 };
 
+function renderInline(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick?: (time: string) => void }) {
   switch (block.type) {
     case "heading":
@@ -24,15 +34,26 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
       );
     case "text":
       return (
-        <p className="font-serif text-foreground/90 text-lg leading-[1.85]">
-          {block.content}
+        <p className="font-serif text-foreground text-lg leading-[1.85] whitespace-pre-wrap">
+          {renderInline(block.content)}
         </p>
+      );
+    case "list":
+      return (
+        <ul className="my-2 space-y-1.5 clear-both">
+          {block.items.filter(item => item.trim()).map((item, i) => (
+            <li key={i} className="flex items-start gap-2.5 font-serif text-foreground text-lg leading-[1.85]">
+              <span className="text-primary font-bold flex-shrink-0 mt-0.5">•</span>
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>
       );
     case "quote":
       return (
         <blockquote className="my-8 pl-6 border-l-4 border-primary/30 clear-both">
           <p className="font-serif italic text-xl text-foreground/80 leading-relaxed">
-            {block.content}
+            {renderInline(block.content)}
           </p>
         </blockquote>
       );
@@ -229,8 +250,8 @@ function BlockView({ block, onTimestampClick }: { block: Block; onTimestampClick
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-serif text-foreground/90 text-lg leading-[1.85] whitespace-pre-wrap">
-              {block.text}
+            <p className="font-serif text-foreground text-lg leading-[1.85] whitespace-pre-wrap">
+              {renderInline(block.text)}
             </p>
           </div>
         </figure>
