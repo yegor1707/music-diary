@@ -2,8 +2,8 @@ import { Router, type IRouter } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { createClient } from "@supabase/supabase-js";
 import { logger } from "../lib/logger.js";
-import { ObjectStorageService } from "../lib/objectStorage.js";
 
 const router: IRouter = Router();
 
@@ -32,7 +32,12 @@ const upload = multer({
   },
 });
 
-const objectStorageService = new ObjectStorageService();
+function getSupabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 router.post("/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
@@ -40,27 +45,37 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     return;
   }
 
-  try {
-    const fileBuffer = fs.readFileSync(req.file.path);
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+  const supabase = getSupabaseClient();
 
-    await fetch(uploadURL, {
-      method: "PUT",
-      headers: { "Content-Type": req.file.mimetype },
-      body: fileBuffer,
-    });
+  if (supabase) {
+    try {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const ext = path.extname(req.file.originalname);
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 
-    fs.unlinkSync(req.file.path);
+      const { error } = await supabase.storage
+        .from("uploads")
+        .upload(fileName, fileBuffer, {
+          contentType: req.file.mimetype,
+          upsert: false,
+        });
 
-    const serveUrl = `/api/storage${objectPath}`;
-    logger.info({ objectPath, serveUrl }, "File uploaded to object storage");
-    res.json({ url: serveUrl });
-  } catch (err) {
-    logger.error({ err }, "GCS upload failed, falling back to local");
-    const localUrl = `/api/uploads/${req.file.filename}`;
-    res.json({ url: localUrl });
+      if (error) throw error;
+
+      const { data } = supabase.storage.from("uploads").getPublicUrl(fileName);
+
+      fs.unlinkSync(req.file.path);
+
+      logger.info({ fileName, url: data.publicUrl }, "File uploaded to Supabase Storage");
+      res.json({ url: data.publicUrl });
+      return;
+    } catch (err) {
+      logger.error({ err }, "Supabase upload failed, falling back to local");
+    }
   }
+
+  const localUrl = `/api/uploads/${req.file.filename}`;
+  res.json({ url: localUrl });
 });
 
 router.get("/uploads/:filename", (req, res) => {
