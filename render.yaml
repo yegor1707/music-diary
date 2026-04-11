@@ -2,7 +2,7 @@ services:
   - type: web
     name: music-diary
     runtime: node
-    buildCommand: pnpm install && pnpm --filter @workspace/music-notebook run build && pnpm --filter @workspace/api-server run build
+    buildCommand: bash scripts/build-production.sh
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     envVars:
       - key: NODE_ENV

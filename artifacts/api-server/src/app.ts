@@ -33,14 +33,22 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
-const frontendDist = path.resolve(process.cwd(), "artifacts/music-notebook/dist/public");
+const possiblePaths = [
+  path.resolve(process.cwd(), "artifacts/music-notebook/dist/public"),
+  path.resolve(process.cwd(), "../music-notebook/dist/public"),
+  path.resolve(__dirname, "../../music-notebook/dist/public"),
+];
 
-if (fs.existsSync(frontendDist)) {
+const frontendDist = possiblePaths.find((p) => fs.existsSync(p));
+
+if (frontendDist) {
+  logger.info({ frontendDist }, "Serving frontend static files");
   app.use(express.static(frontendDist));
   app.get("*", (_req, res) => {
     res.sendFile(path.join(frontendDist, "index.html"));
   });
 } else {
+  logger.warn({ tried: possiblePaths }, "Frontend dist not found, running in API-only mode");
   app.get("/", (_req, res) => {
     res.json({ name: "Music Diary API", status: "ok", version: "1.0.0" });
   });
